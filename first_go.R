@@ -1,20 +1,25 @@
 library(tidyverse)
 library(sf)
 library(data.table)
-# Path to your KML file
-kml_file <- "Yosemite_NP_CA.kml"
 
-# Read the KML file
-kml_data <- st_read(kml_file)
+yos<-st_read("YOSE_Roads.gdb/")
 
-# Get the bounding box
-bbox <- st_bbox(kml_data)
+yos<-st_read("Administrative_Boundaries_of_National_Park_System_Units.gdb/")
+yos$PARKNAME
+
+subset_layer <- yos %>% filter(PARKNAME == "Yosemite")
+yos_sf<-st_transform(subset_layer, crs = 4326)
+yos_simp<-st_make_valid(yos_sf)
+
+ggplot(data = yos_sf) +
+  geom_sf()
+
+kalb<-fread("occ_data/0072311-231120084113126.csv")
 
 
-
- 
-
-kalb<-fread("0067432-231120084113126.csv")
+df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(yos_sf))
+kalb$inside_kml <- st_within(df_sf, yos_simp, sparse = FALSE)
+kalb <- filter(kalb,inside_kml)
 
 datasets_of_interest <- c(
   "Australia's Virtual Herbarium",
@@ -27,6 +32,8 @@ kalb$vouchered<-case_when(kalb$basisOfRecord == "PRESERVED_SPECIMEN" |
                             kalb$institutionCode %in% datasets_of_interest |
                             kalb$ mediaType =="StillImage" ~ TRUE,
                           .default = FALSE)
+
+kalb<-filter(kalb,vouchered)
 
 #do_analysis<-function(kalb){
 kalb$ldate<-dmy(paste(kalb$day,kalb$month,kalb$year,sep="-"))
@@ -57,9 +64,12 @@ df_cumulative <- first %>%
   summarise(count = n()) %>%        # Count records per date
   mutate(cumulative_count = cumsum(count))  # Cumulative count
 
-ggplot(df_cumulative, aes(x = date, y = cumulative_count)) +
+ys<-ggplot(df_cumulative, aes(x = date, y = cumulative_count)) +
   geom_line() +
-  labs(x = "Date", y = "Cumulative Count", title = "Cumulative Number of Species Observed Over Time in Royal National Park")+theme_bw()
+  labs(x = "Date", y = "Cumulative Count", title = "Species in Yosemite ")+theme_bw()
+
+
+
 
 
 
@@ -71,9 +81,19 @@ df_cumulative_all <- kalb %>%
   summarise(count = n()) %>%        # Count records per date
   mutate(cumulative_count = cumsum(count))  # Cumulative count
 
-ggplot(df_cumulative_all, aes(x = date, y = cumulative_count)) +
+ro<-ggplot(df_cumulative_all, aes(x = date, y = cumulative_count)) +
   geom_line() +
-  labs(x = "Date", y = "Cumulative Count", title = "Cumulative Number of Vouchered Records Over Time in Royal")+theme_bw()
+  labs(x = "Date", y = "Cumulative Count", title = " Records in Royal")+theme_bw()
+
+library(patchwork)
+(ys + rs) / (yo + ro)
+
+
+################ below here not working
+
+
+
+
 
 library(APCalign)
 resources<-load_taxonomic_resources()
