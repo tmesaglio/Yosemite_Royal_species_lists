@@ -2,8 +2,6 @@ library(tidyverse)
 library(sf)
 library(data.table)
 
-yos<-st_read("YOSE_Roads.gdb/")
-
 yos<-st_read("Administrative_Boundaries_of_National_Park_System_Units.gdb/")
 yos$PARKNAME
 
@@ -15,11 +13,17 @@ ggplot(data = yos_sf) +
   geom_sf()
 
 kalb<-fread("occ_data/0072311-231120084113126.csv")
-
-
 df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(yos_sf))
 kalb$inside_kml <- st_within(df_sf, yos_simp, sparse = FALSE)
 kalb <- filter(kalb,inside_kml)
+
+kalb<-fread("occ_data/0067432-231120084113126.csv")
+royal<-st_read("kmls/royal national park.kml")
+df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(royal))
+kalb$inside_kml <- st_within(df_sf, royal, sparse = FALSE)
+kalb <- filter(kalb,inside_kml)
+
+
 
 datasets_of_interest <- c(
   "Australia's Virtual Herbarium",
@@ -34,6 +38,7 @@ kalb$vouchered<-case_when(kalb$basisOfRecord == "PRESERVED_SPECIMEN" |
                           .default = FALSE)
 
 kalb<-filter(kalb,vouchered)
+kalb<-filter(kalb,coordinateUncertaintyInMeters<10000|is.na(coordinateUncertaintyInMeters))
 
 #do_analysis<-function(kalb){
 kalb$ldate<-dmy(paste(kalb$day,kalb$month,kalb$year,sep="-"))
@@ -55,6 +60,14 @@ kalb %>%
   mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
   group_by(species) %>%
   slice_min(date,with_ties=FALSE,n=1) ->first
+
+kalb %>%
+  mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
+  group_by(species) %>%
+  slice_max(date,with_ties=FALSE,n=1) ->last
+
+rl<-ggplot(last,aes(x=date))+geom_histogram()+theme_bw()+ggtitle("Last observation of plant species in royal")
+rl + yl
 
 
 df_cumulative <- first %>%
