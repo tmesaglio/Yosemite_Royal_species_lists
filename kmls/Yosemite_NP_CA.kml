@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>Yosemite National Park, CA.kml</name>
+	<Style id="boundary">
+		<IconStyle>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pal4/icon17.png</href>
+			</Icon>
+		</IconStyle>
+		<LabelStyle>
+		</LabelStyle>
+		<LineStyle>
+			<width>1.6</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Folder id="Yosemite_National_Park">
+		<name>Yosemite National Park, CA</name>
+		<Placemark>
+			<name>Yosemite National Park, CA</name>
+			<open>1</open>
+			<Snippet maxLines="0"></Snippet>
+			<description><![CDATA[<html>
+    		<head>
+    			<title>Yosemite National Park, California Lidar:</title>
+    		</head>
+    		
+    		<body>
+			<table align="center" width="600">
+				<tr>
+					<td colspan="3" align="center">
+						<img src="https://cloud.sdsc.edu/v1/AUTH_opentopography/www/lidarfiles/geoes/opentopography_web_hdr_300.png" width="300">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="3">
+						<br>
+						<hr align="center" width="75%">
+						<br>
+						<p><font size="4"><b>Yosemite National Park, California Lidar Imagery in Google Earth</b></font></p>
+						<p><font size="4">This is 1 meter resolution lidar imagery (hillshades) from the <a href="http://opentopo.sdsc.edu/lidarDataset?opentopoID=OTLAS.092012.26911.2">Yosemite National Park, California data collection</a>.
+						<br><br>
+						The data were collected for Greg Stock (National Parks Service). The survey area consists of five polygons totaling an area of 131 square kilometers covering portions of Yosemite National Park, California. The area of interest includes Yosemite Canyon, El Portal, Mariposa Grove and Tuolumne Meadows.  
+						<br><br>
+					</td>
+				</tr>
+			</table>
+			</body>
+		</html>]]></description>
+			<styleUrl>#boundary</styleUrl>
+			<MultiGeometry>
+				<Point>
+					<coordinates>-119.559518974695,37.7135231964741,0</coordinates>
+				</Point>
+				<Polygon>
+					<tessellate>1</tessellate>
+					<outerBoundaryIs>
+						<LinearRing>
+							<coordinates>
+								-119.522775853826,37.7763629801295,0 -119.520366111713,37.7742700268078,0 -119.514481499534,37.7764952461257,0 -119.512353219436,37.7706384374222,0 -119.513731711277,37.7701133989188,0 -119.510948713872,37.7636848316534,0 -119.517334009156,37.7608542251862,0 -119.51825209072,37.7584737309405,0 -119.516812951123,37.7582070816841,0 -119.512370651391,37.7614287418014,0 -119.510256348345,37.7603294623541,0 -119.51002441748,37.7585051595243,0 -119.516007887598,37.7548811560582,0 -119.507365308951,37.7537049245073,0 -119.507348709788,37.7505243539543,0 -119.510154087338,37.7505906442042,0 -119.509658656146,37.747348205345,0 -119.517597107093,37.7465210061996,0 -119.51829961361,37.7438117046029,0 -119.516879677823,37.7441033222342,0 -119.515439133533,37.739430267026,0 -119.520330460065,37.7394519760059,0 -119.525267844304,37.7364895983799,0 -119.524419992814,37.7352462226647,0 -119.521282658868,37.7357460173281,0 -119.519001668936,37.7347315767512,0 -119.517126475744,37.7276077551289,0 -119.513231527037,37.727168184093,0 -119.511619193014,37.7234359199129,0 -119.522494030698,37.7212932576392,0 -119.527244216533,37.7181997642182,0 -119.544941311212,37.7135837149163,0 -119.54553182864,37.7116155274161,0 -119.543533928278,37.7065945221013,0 -119.548672230866,37.7049514508576,0 -119.551613153829,37.7083570784073,0 -119.566271469271,37.7045334958144,0 -119.568141417811,37.7074484535779,0 -119.571466918455,37.7071866024992,0 -119.568646684013,37.6994176131944,0 -119.572834433125,37.6988485300272,0 -119.575444228303,37.7064238600522,0 -119.578663077411,37.7057047271995,0 -119.579262964383,37.7073045907463,0 -119.577925830416,37.7076672187783,0 -119.57968480065,37.7073674605759,0 -119.578016712562,37.7079986406311,0 -119.631559495406,37.692523725783,0 -119.635852853835,37.6917608338458,0 -119.637170692914,37.6937497924904,0 -119.642924325469,37.6932335575097,0 -119.642935976043,37.6932423076868,0 -119.645279502288,37.6915407541229,0 -119.646074508913,37.6941269548184,0 -119.649641660719,37.6943080575684,0 -119.651134794005,37.6970678638724,0 -119.653824376681,37.6974399023991,0 -119.660443251946,37.6947945845847,0 -119.665319080796,37.6966848358922,0 -119.665316758599,37.6947205164291,0 -119.669223674364,37.693622967078,0 -119.672218285131,37.6980694405917,0 -119.677396562434,37.6966903620889,0 -119.684305499417,37.6967674823116,0 -119.686554374416,37.6937245864527,0 -119.688689099955,37.6960006972721,0 -119.693257326387,37.6959505695029,0 -119.695020190226,37.7277004370286,0 -119.683412134873,37.7339215396488,0 -119.683747859542,37.735049239195,0 -119.679221014982,37.7359992204003,0 -119.677326394639,37.7350600910883,0 -119.672678975436,37.7354990870274,0 -119.671728939639,37.7365298868965,0 -119.636895074729,37.7448208078239,0 -119.627536870941,37.7481296695633,0 -119.616264384682,37.7496331309434,0 -119.614677775021,37.7509839376645,0 -119.611197163177,37.7514036045796,0 -119.611214118881,37.7528539874363,0 -119.618825809252,37.7505044042445,0 -119.630027835726,37.7505340897012,0 -119.613068246286,37.757489497658,0 -119.601888192637,37.759413043085,0 -119.602909993251,37.7613638604945,0 -119.598487166021,37.7627681605288,0 -119.593559216988,37.7623902188983,0 -119.593066050056,37.7645186299054,0 -119.574257867528,37.769427701035,0 -119.557286752172,37.7717168805352,0 -119.554925008045,37.7713715774047,0 -119.553471534076,37.7680599954891,0 -119.546620328164,37.7701908781564,0 -119.544457333118,37.772328173322,0 -119.539897968388,37.7734447357062,0 -119.537057292837,37.7727040114067,0 -119.533870522794,37.7747912044835,0 -119.531248139316,37.774126662319,0 -119.522775853826,37.7763629801295,0 
+							</coordinates>
+						</LinearRing>
+					</outerBoundaryIs>
+				</Polygon>
+				<Polygon>
+					<tessellate>1</tessellate>
+					<outerBoundaryIs>
+						<LinearRing>
+							<coordinates>
+								-119.41410903243,37.913348400612,0 -119.412391234731,37.9133385635968,0 -119.411229685369,37.9119025738143,0 -119.409059718279,37.9123255036488,0 -119.400724606135,37.9078372065376,0 -119.382772057507,37.8956767414402,0 -119.356573999754,37.8907346721887,0 -119.355816019686,37.8897856438974,0 -119.353465834954,37.889895748947,0 -119.349317990366,37.8878249880258,0 -119.34570912798,37.8880411642801,0 -119.345553263872,37.8870710638556,0 -119.341142924199,37.8863929432383,0 -119.340884816041,37.8850644181241,0 -119.335708768391,37.8885735449671,0 -119.330750162044,37.8845717770359,0 -119.33274907509,37.8816215105954,0 -119.328182910791,37.8813965711109,0 -119.322510100107,37.8720018477456,0 -119.338317793373,37.8668136675419,0 -119.338328868463,37.8668044361081,0 -119.349476845934,37.8631311235453,0 -119.350670220505,37.8634857553701,0 -119.353531101215,37.8626625898218,0 -119.354675749042,37.8614862642302,0 -119.358094448617,37.8621206967869,0 -119.361341102945,37.8612806629634,0 -119.375023378858,37.86368160013,0 -119.377259605737,37.8653576184375,0 -119.380107191962,37.8658947598934,0 -119.381745062756,37.8673394497335,0 -119.385532795754,37.8667130696289,0 -119.386214540711,37.8681139874514,0 -119.38773236941,37.8679480166367,0 -119.397543703223,37.8736057856024,0 -119.406419390242,37.8836522301377,0 -119.406663570502,37.8866118853608,0 -119.407384166958,37.8870927387593,0 -119.408694485418,37.8864801822915,0 -119.409222956655,37.8887401563251,0 -119.411083292258,37.8889543662011,0 -119.427494705621,37.9084592716139,0 -119.427272665449,37.9096623147249,0 -119.41410903243,37.913348400612,0 
+							</coordinates>
+						</LinearRing>
+					</outerBoundaryIs>
+				</Polygon>
+				<Polygon>
+					<tessellate>1</tessellate>
+					<outerBoundaryIs>
+						<LinearRing>
+							<coordinates>
+								-119.607851460257,37.5194879941911,0 -119.589515495701,37.5195763056819,0 -119.58666341893,37.5143041889457,0 -119.586594701651,37.5067452495588,0 -119.590473226818,37.5053986234878,0 -119.588315759159,37.5022109066827,0 -119.589902625657,37.5016534492859,0 -119.590247346302,37.499519228085,0 -119.59024672379,37.4995012192199,0 -119.588763279644,37.4978126086798,0 -119.615114743311,37.4974570946293,0 -119.615357965806,37.5112298449742,0 -119.61245865947,37.5127538625944,0 -119.611458597515,37.5139204168338,0 -119.611805248497,37.5147778245873,0 -119.610520678979,37.5149233845653,0 -119.606957234158,37.5178496844654,0 -119.608007575884,37.5184482572526,0 -119.607851460257,37.5194879941911,0 
+							</coordinates>
+						</LinearRing>
+					</outerBoundaryIs>
+				</Polygon>
+				<Polygon>
+					<tessellate>1</tessellate>
+					<outerBoundaryIs>
+						<LinearRing>
+							<coordinates>
+								-119.809110289479,37.6786574224921,0 -119.765806608778,37.6784652497778,0 -119.764790324975,37.6721635797685,0 -119.788291680731,37.6652393421593,0 -119.789881376254,37.6656162212853,0 -119.792631902498,37.6646049534568,0 -119.793441685054,37.6653426655202,0 -119.794077936067,37.6647779407614,0 -119.794076922884,37.6647509327485,0 -119.795358175503,37.6638555144375,0 -119.797643088245,37.6649366552748,0 -119.79988266181,37.6636039472985,0 -119.799547255566,37.6619179085877,0 -119.805903083542,37.6600367283817,0 -119.818151416544,37.6614294915248,0 -119.818854034482,37.6620254150877,0 -119.819905566705,37.6616578693376,0 -119.819774498136,37.6749606758922,0 -119.81788429542,37.6753392764939,0 -119.81693757185,37.6745870055434,0 -119.816055650544,37.6752478319516,0 -119.815215304877,37.6746101285971,0 -119.81531770857,37.67641881763,0 -119.813371350651,37.6762130109837,0 -119.809110289479,37.6786574224921,0 
+							</coordinates>
+						</LinearRing>
+					</outerBoundaryIs>
+				</Polygon>
+			</MultiGeometry>
+		</Placemark>
+		<NetworkLink>
+			<name>Yosemite - El Portal unfiltered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_elportal_u/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite - El Portal filtered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_elportal_f/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite - Mariposa unfiltered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_mariposa_u/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite - Mariposa filtered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_mariposa_f/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite - Tuolumne unfiltered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_tuolumne_u/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite - Tuolumne filtered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_tuolumne_f/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite Valley unfiltered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_canyon_u/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+		<NetworkLink>
+			<name>Yosemite Valley filtered shaded relief</name>
+			<Snippet maxLines="0"></Snippet>
+			<flyToView>1</flyToView>
+			<Url>
+				<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/GEimagery/overlays/yosemite_canyon_f/doc.kml?</href>
+				<viewRefreshMode>onRequest</viewRefreshMode>
+			</Url>
+		</NetworkLink>
+	</Folder>
+<ScreenOverlay id="logo">
+	<name>logo</name>
+	<visibility>1</visibility>
+	<Icon>
+		<href>https://cloud.sdsc.edu/v1/AUTH_opentopography/www/lidarfiles/geoes/OT_NCALM_logo.png</href>
+	</Icon>
+	<overlayXY x="0" y="1" xunits="fraction" yunits="fraction"/>
+	<screenXY x="0" y="1" xunits="fraction" yunits="fraction"/>
+	<size x="273" y="108" xunits="pixels" yunits="pixels"/>
+</ScreenOverlay>
+</Document>
+</kml>

@@ -1,20 +1,48 @@
 library(tidyverse)
+library(sf)
+library(data.table)
+# Path to your KML file
+kml_file <- "Yosemite_NP_CA.kml"
 
-kalb<-read.csv("records-2024-01-16-kalbarri.csv")
+# Read the KML file
+kml_data <- st_read(kml_file)
+
+# Get the bounding box
+bbox <- st_bbox(kml_data)
 
 
+
+ 
+
+kalb<-fread("0067432-231120084113126.csv")
+
+datasets_of_interest <- c(
+  "Australia's Virtual Herbarium",
+  "iNaturalist observations",
+  "iNaturalist research-grade observations",
+  "iNaturalist"
+)
+
+kalb$vouchered<-case_when(kalb$basisOfRecord == "PRESERVED_SPECIMEN" |
+                            kalb$institutionCode %in% datasets_of_interest |
+                            kalb$ mediaType =="StillImage" ~ TRUE,
+                          .default = FALSE)
+
+#do_analysis<-function(kalb){
 kalb$ldate<-dmy(paste(kalb$day,kalb$month,kalb$year,sep="-"))
 
 problem<-filter(kalb,is.na(ldate))
 
+kalb$ldate<-case_when(is.na(kalb$ldate) ~ ymd(kalb$eventDate),
+                      .default = kalb$ldate)
+
 kalb$ldate<-case_when(is.na(kalb$ldate) ~ dmy(paste(31,12,kalb$year)),
           .default = kalb$ldate)
 
-kalb$ldate<-case_when(is.na(kalb$ldate) ~ my(kalb$verbatimEventDate),
-                      .default = kalb$ldate)
 
-kalb$ldate<-case_when(is.na(kalb$ldate) ~ dmy(paste(31,12,kalb$verbatimEventDate,sep="-")),
-                      .default = kalb$ldate)
+#BAD DPIE
+kalb<-filter(kalb,!(collectionCode=="BioNet Atlas of NSW Wildlife"&ldate<ymd("1900-01-01")))
+
 
 kalb %>%
   mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
@@ -31,7 +59,8 @@ df_cumulative <- first %>%
 
 ggplot(df_cumulative, aes(x = date, y = cumulative_count)) +
   geom_line() +
-  labs(x = "Date", y = "Cumulative Count", title = "Cumulative Number of Species Observed Over Time in Kalbari")+theme_bw()
+  labs(x = "Date", y = "Cumulative Count", title = "Cumulative Number of Species Observed Over Time in Royal National Park")+theme_bw()
+
 
 
 
@@ -44,7 +73,7 @@ df_cumulative_all <- kalb %>%
 
 ggplot(df_cumulative_all, aes(x = date, y = cumulative_count)) +
   geom_line() +
-  labs(x = "Date", y = "Cumulative Count", title = "Cumulative Number of Records Over Time in Kalbari")+theme_bw()
+  labs(x = "Date", y = "Cumulative Count", title = "Cumulative Number of Vouchered Records Over Time in Royal")+theme_bw()
 
 library(APCalign)
 resources<-load_taxonomic_resources()
@@ -111,13 +140,31 @@ ggplot(aes(x = date, y = cumulative_count,color=native_anywhere_in_aus)) +
     group_by(native_anywhere_in_aus) %>%         # Regroup by class
     mutate(cumulative_count = cumsum(count)) 
   
+  table(y2k$native_anywhere_in_aus)
+  
+  y2k_native<-filter(y2k,native_anywhere_in_aus=="native")
+  y2k_native$species[!y2k_native$species %in% recent$species]
   
   recent_cumulative_split %>%
     #filter(native_anywhere_in_aus=="native") %>%
     ggplot(aes(x = date, y = cumulative_count,color=native_anywhere_in_aus)) +
     geom_line() +
-    labs(x = "Date", y = "Cumulative Count", title = "Species observed in Kalbarri since 2013 versus pre-2000 diversity")+theme_bw()+
-    geom_hline(yintercept = 1341, linetype = "dashed", color = "blue")+
-    geom_hline(yintercept = 78, linetype = "dashed", color = "red")
-  
-                     
+    labs(x = "Date", y = "Cumulative Count", title = "Species observed in Royal since 2013 versus pre-2000 diversity")+theme_bw()+
+    geom_hline(yintercept = 1008, linetype = "dashed", color = "blue")+
+    geom_hline(yintercept = 97, linetype = "dashed", color = "red")
+#}
+    
+
+df<-data.frame(
+categories=c("False historic presence data","Taxonomy confusion","ID difficulty","Possible local extinction"),                 
+percent=c(30,15,25,30))
+df$x <- ""
+
+# Creating a stacked bar plot with percentage labels
+ggplot(df, aes(x=x, y=percent, fill=categories)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=paste0(percent, "%")), position=position_stack(vjust=0.5)) +
+  labs(fill="Categories", x=NULL, y="Percentage", title="Causes for the Absense of Recent Observations") +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
+
