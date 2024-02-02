@@ -1,8 +1,12 @@
 library(tidyverse)
 library(sf)
 library(data.table)
+source("funx.R")
+library(xlsx)
 
-yos<-st_read("Administrative_Boundaries_of_National_Park_System_Units.gdb/")
+yos_nps<-fread("park_species_list/NPSpecies_Checklist_YOSE_20240131000637.csv")
+
+yos<-st_read("kmls/Administrative_Boundaries_of_National_Park_System_Units.gdb/")
 yos$PARKNAME
 
 subset_layer <- yos %>% filter(PARKNAME == "Yosemite")
@@ -12,61 +16,103 @@ yos_simp<-st_make_valid(yos_sf)
 ggplot(data = yos_sf) +
   geom_sf()
 
-kalb<-fread("occ_data/0072311-231120084113126.csv")
-df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(yos_sf))
-kalb$inside_kml <- st_within(df_sf, yos_simp, sparse = FALSE)
-kalb <- filter(kalb,inside_kml)
+yosemite_path<-"occ_data/0072311-231120084113126.csv"
+yos<-read_in_and_filter(yosemite_path,yos_simp)
 
-kalb<-fread("occ_data/0067432-231120084113126.csv")
-royal<-st_read("kmls/royal national park.kml")
-df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(royal))
-kalb$inside_kml <- st_within(df_sf, royal, sparse = FALSE)
-kalb <- filter(kalb,inside_kml)
+yos2_path<-"occ_data/SymbOutput_2024-02-01_173314_DwC-A/occurrences.csv"
+yos2<-read_in_and_filter2(yos2_path,yos_simp)
 
+#sum(unique(yos$species) %in% unique(word(yos_nps$`Scientific Name`),1,2))
+#gbif<-unique(yos$species)
+#nps<-unique(word(yos_nps$`Scientific Name`,1,2))
 
 
-datasets_of_interest <- c(
-  "Australia's Virtual Herbarium",
-  "iNaturalist observations",
-  "iNaturalist research-grade observations",
-  "iNaturalist"
-)
 
-kalb$vouchered<-case_when(kalb$basisOfRecord == "PRESERVED_SPECIMEN" |
-                            kalb$institutionCode %in% datasets_of_interest |
-                            kalb$ mediaType =="StillImage" ~ TRUE,
-                          .default = FALSE)
 
-kalb<-filter(kalb,vouchered)
-kalb<-filter(kalb,coordinateUncertaintyInMeters<10000|is.na(coordinateUncertaintyInMeters))
+royal_path<-"occ_data/0067432-231120084113126.csv"
+royal_kml<-st_read("kmls/royal national park.kml")
+royal<-read_in_and_filter(royal_path,royal_kml)
 
+yos$inat<-yos$institutionCode=="iNaturalist"
+
+yos_inat<-filter(yos,inat)
+length(unique((yos_inat$recordedBy)))
+sort(table(yos_inat$recordedBy),decreasing = TRUE)[1:10]
+
+royal$inat<-royal$institutionCode=="iNaturalist"
+royal<-arrange(royal,inat)
+ggplot(data = royal_kml) +
+  geom_sf()+geom_point(data=royal,aes(y=decimalLatitude,x=decimalLongitude,col=inat),alpha=0.7,size=0.8)+theme_bw()
+
+
+
+royal <- fix_dates(royal)
+yos <- fix_dates(yos)
+yos2 <- fix_dates(yos2)
+
+yos_cch_add<-filter(yos2,!yos2$occurrenceID %in% yos$occurrenceID | yos2$occurrenceID =="")
 #do_analysis<-function(kalb){
-kalb$ldate<-dmy(paste(kalb$day,kalb$month,kalb$year,sep="-"))
 
-problem<-filter(kalb,is.na(ldate))
+y<-select(yos,species,decimalLatitude,decimalLongitude,institutionCode,coordinateUncertaintyInMeters,recordedBy,inat,ldate)
 
-kalb$ldate<-case_when(is.na(kalb$ldate) ~ ymd(kalb$eventDate),
-                      .default = kalb$ldate)
+yos2$species<-paste(yos2$genus,yos2$specificEpithet)
 
-kalb$ldate<-case_when(is.na(kalb$ldate) ~ dmy(paste(31,12,kalb$year)),
-          .default = kalb$ldate)
+y2<-select(yos2,species,decimalLatitude,decimalLongitude,institutionCode,coordinateUncertaintyInMeters,ldate)
+y2$inat<-"cch2"
+y$inat<-case_when(y$inat==TRUE ~ "inat",
+                .default = "gbif herbarium")
+
+yall<-bind_rows(y,y2)
+
+length(unique(y$species))
+length(unique(y2$species))
+
+unique(y2$species)[!unique(y2$species)%in%unique(y$species)]
+
+ggplot(data = yos_simp) +
+  geom_sf()+geom_point(data=yall,aes(y=decimalLatitude,x=decimalLongitude,col=inat),alpha=0.7,size=0.8)+theme_bw()
+
 
 
 #BAD DPIE
-kalb<-filter(kalb,!(collectionCode=="BioNet Atlas of NSW Wildlife"&ldate<ymd("1900-01-01")))
+royal<-filter(royal,!(collectionCode=="BioNet Atlas of NSW Wildlife"&ldate<ymd("1900-01-01")))
+
+#BAD CCH
+yall<-filter(yall,!(ldate<ymd("1850-01-01")))
+#vroyal<-royal%>% filter(vouchered)
+#vyos<-yos%>% filter(vouchered)
 
 
-kalb %>%
+df<-get_cummulative_sum(royal)
+df2<-get_cummulative_sum(vroyal)
+
+ggplot()+theme_bw()+ggtitle("") +
+  geom_line(data=df,aes(x=date,y=cumulative_count)) +
+  geom_line(data=df2,aes(x=date,y=cumulative_count),col="red") 
+
+inat_parse(vroyal,"v_royal")
+
+inat_parse(yall,"yos")
+
+
+
+
+
+
+
+
+
+yall %>%
   mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
   group_by(species) %>%
   slice_min(date,with_ties=FALSE,n=1) ->first
 
-kalb %>%
+yall %>%
   mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
   group_by(species) %>%
   slice_max(date,with_ties=FALSE,n=1) ->last
 
-rl<-ggplot(last,aes(x=date))+geom_histogram()+theme_bw()+ggtitle("Last observation of plant species in royal")
+rl<-ggplot(first,aes(x=date))+geom_histogram()+theme_bw()+ggtitle("Last observation of plant species in yosemite")
 rl + yl
 
 
@@ -94,9 +140,6 @@ df_cumulative_all <- kalb %>%
   summarise(count = n()) %>%        # Count records per date
   mutate(cumulative_count = cumsum(count))  # Cumulative count
 
-ro<-ggplot(df_cumulative_all, aes(x = date, y = cumulative_count)) +
-  geom_line() +
-  labs(x = "Date", y = "Cumulative Count", title = " Records in Royal")+theme_bw()
 
 library(patchwork)
 (ys + rs) / (yo + ro)
