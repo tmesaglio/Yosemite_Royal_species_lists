@@ -62,12 +62,17 @@ y2$inat<-"cch2"
 y$inat<-case_when(y$inat==TRUE ~ "inat",
                 .default = "gbif herbarium")
 
-yall<-bind_rows(y,y2)
 
-length(unique(y$species))
-length(unique(y2$species))
+y3<-filter(y2,y2$species %in% y$species) #for now assuming the other species are errors
 
-unique(y2$species)[!unique(y2$species)%in%unique(y$species)]
+yall<-bind_rows(y,y3)
+
+#length(unique(y$species))
+#length(unique(yall$species))
+
+#unique(y2$species)[!unique(y2$species)%in%unique(y$species)]
+
+
 
 ggplot(data = yos_simp) +
   geom_sf()+geom_point(data=yall,aes(y=decimalLatitude,x=decimalLongitude,col=inat),alpha=0.7,size=0.8)+theme_bw()
@@ -97,7 +102,7 @@ inat_parse(yall,"yos")
 
 
 
-
+inat_species<-
 
 
 
@@ -244,3 +249,6 @@ ggplot(df, aes(x=x, y=percent, fill=categories)) +
   theme_minimal() +
   theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank())
 
+write_csv(data.frame(inat_only_species=sort(inat_species[!inat_species%in%not_inat_species])),"inat_only_species_yosemite.csv")
+
+write_csv(data.frame(herbarium_only=sort(not_inat_species[!not_inat_species%in%inat_species])),"herbarium_only_species_yosemite.csv")
