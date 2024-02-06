@@ -62,15 +62,20 @@ y2$inat<-"cch2"
 y$inat<-case_when(y$inat==TRUE ~ "inat",
                 .default = "gbif herbarium")
 
+tnrs<-read_csv("occ_data/tnrs_result.csv")
+tnrs$species<-tnrs$Name_submitted
+y4<-left_join(y2,tnrs)
 
 y3<-filter(y2,y2$species %in% y$species) #for now assuming the other species are errors
 
-yall<-bind_rows(y,y3)
+y4$species<-case_when(!is.na(y4$Accepted_species) ~ y4$Accepted_species,
+                            .default = y4$species)
 
-#length(unique(y$species))
-#length(unique(yall$species))
+yall<-bind_rows(y,y4)
 
-#unique(y2$species)[!unique(y2$species)%in%unique(y$species)]
+# length(unique(y$species))
+# length(unique(yall$species))
+# unique(y2$species)[!unique(y2$species)%in%unique(y$species)]
 
 
 
@@ -89,25 +94,21 @@ yall<-filter(yall,!(ldate<ymd("1850-01-01")))
 
 
 df<-get_cummulative_sum(royal)
-df2<-get_cummulative_sum(vroyal)
+df2<-get_cummulative_sum(yall)
 
 ggplot()+theme_bw()+ggtitle("") +
   geom_line(data=df,aes(x=date,y=cumulative_count)) +
   geom_line(data=df2,aes(x=date,y=cumulative_count),col="red") 
 
-inat_parse(vroyal,"v_royal")
+inat_parse(royal,"royal")
 
 inat_parse(yall,"yos")
 
+#ok to here
 
 
 
-inat_species<-
-
-
-
-
-yall %>%
+royal %>%
   mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
   group_by(species) %>%
   slice_min(date,with_ties=FALSE,n=1) ->first
@@ -117,21 +118,21 @@ yall %>%
   group_by(species) %>%
   slice_max(date,with_ties=FALSE,n=1) ->last
 
-rl<-ggplot(first,aes(x=date))+geom_histogram()+theme_bw()+ggtitle("Last observation of plant species in yosemite")
-rl + yl
+yf<-ggplot(first,aes(x=date))+geom_histogram()+theme_bw()+ggtitle("Last observation of plant species in yosemite")
+rf + yf
 
 
-df_cumulative <- first %>%
+df_cumulative_r <- first %>%
   mutate(date = as.Date(date)) %>%  # Ensure the date is in Date format
   arrange(date) %>%                 # Arrange data by date
   group_by(date) %>% 
   summarise(count = n()) %>%        # Count records per date
   mutate(cumulative_count = cumsum(count))  # Cumulative count
 
-ys<-ggplot(df_cumulative, aes(x = date, y = cumulative_count)) +
-  geom_line() +
-  labs(x = "Date", y = "Cumulative Count", title = "Species in Yosemite ")+theme_bw()
-
+ggplot() +
+  geom_line(data=df_cumulative_r,aes(x = date, y = cumulative_count)) +
+  geom_line(data=df_cumulative_y,aes(x = date, y = cumulative_count),col="red") +
+  labs(x = "Date", y = "Cumulative Count", title = "Species observed ")+theme_bw()
 
 
 
@@ -252,3 +253,7 @@ ggplot(df, aes(x=x, y=percent, fill=categories)) +
 write_csv(data.frame(inat_only_species=sort(inat_species[!inat_species%in%not_inat_species])),"inat_only_species_yosemite.csv")
 
 write_csv(data.frame(herbarium_only=sort(not_inat_species[!not_inat_species%in%inat_species])),"herbarium_only_species_yosemite.csv")
+
+
+yall %>%
+  filter(inat!="inat")->not_inat
