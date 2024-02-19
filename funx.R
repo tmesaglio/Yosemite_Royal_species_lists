@@ -5,7 +5,7 @@ read_in_and_filter<-function(obs_path,kml){
   require(data.table)
   kalb<-fread(obs_path)
   kalb<-filter(kalb,!is.na(decimalLatitude))
-  df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(yos_sf))
+  df_sf <- st_as_sf(kalb, coords = c("decimalLongitude", "decimalLatitude"), crs = st_crs(kml))
   kalb$inside_kml <- st_within(df_sf, kml, sparse = FALSE)
   kalb <- filter(kalb,inside_kml)
   datasets_of_interest <- c(

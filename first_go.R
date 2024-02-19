@@ -3,12 +3,16 @@ library(sf)
 library(data.table)
 source("funx.R")
 library(xlsx)
+library(VennDiagram)
 
 yos_nps<-fread("park_species_list/NPSpecies_Checklist_YOSE_20240131000637.csv")
+write_csv(data.frame(sp=yos_nps$`Scientific Name`),file="yos_park_list.csv")
+#tnrs step
+nps_tnrs<-read_csv("occ_data/yos_park_list_tnrs.csv")
+nps_filt<-filter(nps_tnrs, Overall_score>0.99)
+yos_accepted_names<-unique(nps_filt$Accepted_species)
 
 yos<-st_read("kmls/Administrative_Boundaries_of_National_Park_System_Units.gdb/")
-yos$PARKNAME
-
 subset_layer <- yos %>% filter(PARKNAME == "Yosemite")
 yos_sf<-st_transform(subset_layer, crs = 4326)
 yos_simp<-st_make_valid(yos_sf)
@@ -16,11 +20,45 @@ yos_simp<-st_make_valid(yos_sf)
 ggplot(data = yos_sf) +
   geom_sf()
 
-yosemite_path<-"occ_data/0072311-231120084113126.csv"
+yosemite_path<-"occ_data/0005020-240202131308920.csv"
 yos<-read_in_and_filter(yosemite_path,yos_simp)
+yos<-filter(yos,species!="")
+#write_csv(data.frame(gbif_sp=unique(yos$species)),"gbif_sp_yos.csv")
+gbif_yos_tnrs<-read_csv("occ_data/gbif_yos_tnrs.csv")
+gbif_filt<-filter(gbif_yos_tnrs, Overall_score>0.99)
+gbif_yos_tnrs$species<-gbif_yos_tnrs$Name_submitted
+yos_cc<-left_join(yos,gbif_yos_tnrs)
+
+yos_herb<-filter(yos_cc,basisOfRecord=="PRESERVED_SPECIMEN")
+yos_media<-filter(yos_cc,!basisOfRecord=="PRESERVED_SPECIMEN")
+
 
 yos2_path<-"occ_data/SymbOutput_2024-02-01_173314_DwC-A/occurrences.csv"
 yos2<-read_in_and_filter2(yos2_path,yos_simp)
+
+#write_csv(data.frame(gbif_sp=unique(yos2$scientificName)),"cch_sp_yos.csv")
+#tnrs_step
+cch_tnrs<-read_csv("occ_data/cch_tnrs.csv")
+cch_filt<-filter(cch_tnrs, Overall_score>0.99)
+yos_herb_filt<-filter(yos_herb,institutionCode %in% c("RSA","SJSU","DAV","CAS","YPM"))
+herbarium_list<-unique(c(cch_filt$Accepted_species,yos_herb_filt$Accepted_species))
+
+input_list <- list(herbaria_collections = na.omit(herbarium_list), 
+                   parklist = na.omit(yos_accepted_names), 
+                   citizen_science = na.omit(unique(yos_media$Accepted_species)))
+
+# Generate the Venn diagram
+venn.plot <- venn.diagram(
+  x = input_list,
+  filename = NULL,  # Set to NULL for plotting to the R console
+  output = TRUE
+)
+
+bad_herbaria <- filter(yos_herb_filt, !Accepted_species %in%yos_media$Accepted_species & !Accepted_species %in% yos_accepted_names)
+
+# Display the Venn diagram
+grid.draw(venn.plot)
+
 
 #sum(unique(yos$species) %in% unique(word(yos_nps$`Scientific Name`),1,2))
 #gbif<-unique(yos$species)
@@ -53,6 +91,8 @@ yos2 <- fix_dates(yos2)
 yos_cch_add<-filter(yos2,!yos2$occurrenceID %in% yos$occurrenceID | yos2$occurrenceID =="")
 #do_analysis<-function(kalb){
 
+probs<-filter(yos_cch_add,ldate<ymd("1860-1-1"))
+
 y<-select(yos,species,decimalLatitude,decimalLongitude,institutionCode,coordinateUncertaintyInMeters,recordedBy,inat,ldate)
 
 yos2$species<-paste(yos2$genus,yos2$specificEpithet)
@@ -64,9 +104,10 @@ y$inat<-case_when(y$inat==TRUE ~ "inat",
 
 tnrs<-read_csv("occ_data/tnrs_result.csv")
 tnrs$species<-tnrs$Name_submitted
-y4<-left_join(y2,tnrs)
+y4<-left_join(y2,tnrs)%>%
+  filter(!species %in% c(""," "))
 
-y3<-filter(y2,y2$species %in% y$species) #for now assuming the other species are errors
+#y3<-filter(y2,y2$species %in% y$species) #for now assuming the other species are errors
 
 y4$species<-case_when(!is.na(y4$Accepted_species) ~ y4$Accepted_species,
                             .default = y4$species)
@@ -104,11 +145,73 @@ inat_parse(royal,"royal")
 
 inat_parse(yall,"yos")
 
-#ok to here
+inat<-filter(royal,institutionCode=="iNaturalist")
+not_inat<-filter(royal,institutionCode!="iNaturalist")
+
+new_inat<-unique(inat$species)[!unique(inat$species) %in% not_inat$species]
+
+write_csv(data.frame(new_inat=new_inat),"royal_new_inat_species.csv")
+
+yall$inat<-case_when(yall$inat=="inat" ~ "iNat",
+                     .default="Herbarium")
 
 
+yall %>%
+  filter(species!="")%>%
+   group_by(inat,species)%>%
+     summarize(n=n()) %>%
+  pivot_wider(names_from = inat, values_from = 3,values_fill = 0) %>%
+  ggplot(aes(x=Herbarium,y=iNat))+geom_point()+geom_abline(intercept = 0, slope = 1)+theme_bw()+scale_x_sqrt()+scale_y_sqrt()
+
+royal$inat<-case_when(royal$inat ~ "iNat",
+                     .default="Herbarium")
 
 royal %>%
+  filter(species!="")%>%
+  group_by(inat,species)%>%
+  summarize(n=n()) %>%
+  pivot_wider(names_from = inat, values_from = 3,values_fill = 0) ->temp
+
+ %>%
+  filter(species!="")%>%
+  group_by(species) %>%
+  summarize(year=max(year(as.Date(ldate, format="%Y-%m-%d")),na.rm=TRUE))->last_year
+
+temp %>%
+  left_join(last_year) %>% # Adjust by = "..." to match your datasets
+  mutate(
+    last_year_observed = case_when(
+      year < 1950 ~ "before 1950",
+      year >= 1950 & year <= 2000 ~ "1950-2000",
+      year > 2000 & year <= 2010 ~ "2000-2010",
+      year > 2010 & year <= 2015 ~ "2010-2015",
+      year > 2015 & year <= 2020 ~ "2016-2020",
+      year > 2020 ~ "2020-current",
+      TRUE ~ NA_character_ # for any cases that don't fit the above, though there shouldn't be any
+    )
+  ) ->tt
+
+hist(tt$year)
+
+r_plot<-tt%>%
+  ggplot(aes(x = Herbarium, y = iNat, col = last_year_observed)) +
+  geom_point(alpha = 0.8) +
+  geom_abline(intercept = 0, slope = 1) +
+  theme_bw() +
+  scale_x_sqrt() +
+  scale_y_sqrt() +
+  theme_minimal() # Optional: for a cleaner look
+
+r_plot+y_plot
+
+#ok to here
+
+yall %>%
+  group_by(species)%>%
+  summarise(n=n(),inat_count=sum(grepl("iNat",institutionCode)))->temp
+
+
+yall %>%
   mutate(date = as.Date(ldate)) %>%  # Convert to Date format if it's not already
   group_by(species) %>%
   slice_min(date,with_ties=FALSE,n=1) ->first
