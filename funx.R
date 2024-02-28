@@ -31,7 +31,7 @@ read_in_and_filter <- function(obs_path, kml) {
   kalb <-
     filter(
       kalb,
-      coordinateUncertaintyInMeters < 10000 |
+      coordinateUncertaintyInMeters <= 10000 |
         is.na(coordinateUncertaintyInMeters)
     )
   

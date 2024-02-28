@@ -11,8 +11,8 @@ write_csv(data.frame(sp = yos_nps$`Scientific Name`), file = "yos_park_list.csv"
 #tnrs step
 nps_tnrs <- read_csv("occ_data/yos_park_list_tnrs.csv")
 nps_filt <-
-  filter(nps_tnrs, Overall_score > 0.99 &
-           Taxonomic_status == "Accepted")
+  filter(nps_tnrs, Overall_score > 0.99)# &
+           #Taxonomic_status == "Accepted")
 yos_accepted_names <- unique(nps_filt$Accepted_species)
 
 yos <-
@@ -65,12 +65,12 @@ venn.plot <- venn.diagram(x = input_list,
                           # Set to NULL for plotting to the R console
                           output = TRUE)
 
-bad_herbaria <-
-  filter(
-    yos_herb_filt,
-    !Accepted_species %in% yos_media$Accepted_species &
-      !Accepted_species %in% yos_accepted_names
-  )
+# bad_herbaria <-
+#   filter(
+#     yos_herb_filt,
+#     !Accepted_species %in% yos_media$Accepted_species &
+#       !Accepted_species %in% yos_accepted_names
+#   )
 
 # Display the Venn diagram
 grid.draw(venn.plot)
@@ -86,6 +86,8 @@ grid.draw(venn.plot)
 royal_path <- "occ_data/0067432-231120084113126.csv"
 royal_kml <- st_read("kmls/royal national park.kml")
 royal <- read_in_and_filter(royal_path, royal_kml)
+
+filter(royal,species=="Malaisia scandens")
 
 yos$inat <- yos$institutionCode == "iNaturalist"
 
