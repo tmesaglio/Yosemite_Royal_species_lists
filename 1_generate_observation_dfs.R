@@ -112,6 +112,6 @@ table(royal$basisOfRecord)
 royal_herb <- filter(royal, basisOfRecord == "PRESERVED_SPECIMEN")
 royal_pic <- filter(royal, basisOfRecord == "HUMAN_OBSERVATION")
 
-unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species]
+write_csv(data_frame(inat_only=unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species]),"royal_inat_only.csv")
 
 write_csv(royal, "observation_data/royal_all_obs.csv")
