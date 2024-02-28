@@ -110,8 +110,11 @@ royal <- read_in_and_filter(royal_path, royal_kml)
 table(royal$basisOfRecord)
 
 royal_herb <- filter(royal, basisOfRecord == "PRESERVED_SPECIMEN")
-royal_pic <- filter(royal, basisOfRecord == "HUMAN_OBSERVATION")
+royal_pic <- filter(royal, basisOfRecord == "HUMAN_OBSERVATION" & institutionCode=="iNaturalist")
 
-write_csv(data_frame(inat_only=unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species]),"royal_inat_only.csv")
+length(unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species])
+inat_new<-unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species]
+
+write_csv(data_frame(inat_only=inat_new),"royal_inat_only.csv")
 
 write_csv(royal, "observation_data/royal_all_obs.csv")
