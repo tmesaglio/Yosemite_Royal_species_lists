@@ -89,6 +89,7 @@ ss_c <- function(df) {
       "day",
       "month",
       "year",
+      "eventDate",
       "decimalLatitude",
       "decimalLongitude"
     )
