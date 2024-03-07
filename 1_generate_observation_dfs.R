@@ -2,7 +2,6 @@ library(tidyverse)
 library(sf)
 library(data.table)
 source("funx.R")
-library(xlsx)
 library(VennDiagram)
 
 
@@ -17,10 +16,10 @@ nps_filt <-
   filter(nps_tnrs, Overall_score > 0.99)# &
 #Taxonomic_status == "Accepted")
 yos_accepted_names <- unique(nps_filt$Accepted_species)
-#park list
+
 #############################################
-
-
+#get yosemite shapefile
+#############################################
 
 yos <-
   st_read("kmls/Administrative_Boundaries_of_National_Park_System_Units.gdb/")
@@ -28,12 +27,16 @@ subset_layer <- yos %>% filter(PARKNAME == "Yosemite")
 yos_sf <- st_transform(subset_layer, crs = 4326)
 yos_simp <- st_make_valid(yos_sf)
 
+###########################
+#yosemite gbif
+###########################
 
 yosemite_path <- "occ_data/0005020-240202131308920.csv"
 yos <- read_in_and_filter(yosemite_path, yos_simp)
 yos <- filter(yos, species != "")
-#write_csv(data.frame(gbif_sp=unique(yos$species)),"gbif_sp_yos.csv")
 gbif_yos_tnrs <- read_csv("occ_data/gbif_yos_tnrs.csv")
+
+# only taking TNRS accepted names
 gbif_filt <-
   filter(gbif_yos_tnrs,
          Overall_score > 0.99 & Taxonomic_status == "Accepted")
@@ -116,6 +119,5 @@ royal_pic <- filter(royal, basisOfRecord == "HUMAN_OBSERVATION" & institutionCod
 length(unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species])
 inat_new<-unique(royal_pic$species) [!unique(royal_pic$species) %in% royal_herb$species]
 
-write_csv(data_frame(inat_only=inat_new),"royal_inat_only.csv")
-
+write_csv(tibble(inat_only=inat_new),"royal_inat_only.csv")
 write_csv(royal, "observation_data/royal_all_obs.csv")

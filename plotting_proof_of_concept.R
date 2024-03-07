@@ -1,6 +1,7 @@
 library(tidyverse)
 library(lubridate)
 library(zoo)
+library(patchwork)
 source("funx.R")
 royal<-read_csv("observation_data/royal_all_obs.csv")
 royal<-fix_dates(royal) %>%
@@ -23,7 +24,6 @@ a$herb_cumm<-na.locf(a$cumulative_count.x)
 a$all_cumm <- a$herb_cumm + a$inat_cumm
 
 
-library(ggplot2)
 
 rplot<-ggplot(a) +
   # Fill between x-axis and pic_obs_cummulative with a legend
@@ -89,8 +89,8 @@ yplot<-ggplot(a1) +
   guides(color = guide_legend(override.aes = list(linetype = c(0, 1)))) +
   ggtitle("Yosemite National Park")
 
-library(patchwork)
-rplot+yplot
+z<-rplot+yplot
+ggsave("through_time.pdf",plot=z)
 
 
 royal %>%
@@ -116,7 +116,7 @@ a$herb_cumm<-na.locf(a$cumulative_count.x)
 
 a$all_cumm <- a$herb_cumm + a$inat_cumm
 
-library(ggplot2)
+
 
 rplot<-ggplot(a) +
   # Fill between x-axis and pic_obs_cummulative with a legend
@@ -183,3 +183,18 @@ yplot<-ggplot(a) +
 guides(color = guide_legend(override.aes = list(linetype = c(0, 1))))
 
 rplot+yplot
+
+war<-bind_rows(filter(royal,species=="Telopea speciosissima"))
+
+seq<-filter(yos,species=="Sequoiadendron giganteum")
+
+z<-bind_rows(
+select(war,species,ldate,basisOfRecord),
+select(seq,species,ldate,basisOfRecord))
+
+z$type<-case_when(z$basisOfRecord %in% c("PRESERVED_SPECIMEN","PreservedSpecimen") ~ "Herbarium",
+z$basisOfRecord == "HUMAN_OBSERVATION" ~ "Citizen Science")
+
+ggplot(z,aes(x=ldate,y=species,col=type))+geom_jitter(width=0,height=0.15,alpha=0.5)+theme_bw()+ylab("")+xlab("")
+ggsave("example_species.pdf")
+
