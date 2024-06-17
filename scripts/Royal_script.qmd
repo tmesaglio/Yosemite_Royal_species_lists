@@ -1,0 +1,487 @@
+---
+title: "Royal vouchers, parks list, iNaturalist"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Libraries
+
+```{r}
+library(tidyverse)
+library(eulerr)
+
+Royal_data <- read_csv("data_Royal/Royal_all_data.2024.06.11.csv")
+```
+
+names(Royal_data) \[1\] "notes" "accepted_name" "scientific_name" "status"\
+\[5\] "family" "broader" "establishment_means" "count_RG"\
+\[9\] "in_park_START" "voucher_START" "iNat_RG_START" "in_park_END"\
+\[13\] "voucher_END" "iNat_RG_END" "old_voucher" "recent_voucher"\
+\[17\] "iNat_needsID_only" "final_list" "iNat_outcome" "parks_outcome"\
+\[21\] "voucher_outcome" "old&recent" "first_record" "last_record"\
+\[25\] "iNat_needs_ID_only" "count_needs_id" "synonym_matches" "use_as_example"\
+\[29\] "possibly_valid_needs_ID" "reason_for_parks_list" "iNat_endpoints" "reason_for_iNat_only"\
+\[33\] "iNat_needs_ID_only_verdict" "summary" "rand_check" "reason_for_voucher_only"\
+\[37\] "notes_about_vouchers" "notes_for_parks_only" "reason_for_iNat_only_v3" "reason_for_iNat_only_v2"\
+\[41\] "iNat_notes" "range_from_iNat_or_Jepson" "voucher_links" "iNat_needsID_only_notes"\
+\[45\] "iNat_missing_in_gbif" "reason_for_voucher_only_simple" "taxonomic_concerns" "Table2_level1"\
+\[49\] "tabulated_Table2"
+
+## 7 Euler diagrams
+
+### - starting data
+
+```{r}
+start <- Royal_data %>%
+  filter(!notes %in% c("needsID-IGNORE")) %>%
+  mutate(
+    voucher_start = ifelse(voucher_START == 1, TRUE, NA),
+    voucher_start = ifelse(is.na(voucher_start), FALSE, voucher_start),
+    parklist_start = ifelse(in_park_START == 1, TRUE, NA),
+    parklist_start = ifelse(is.na(parklist_start), FALSE, parklist_start),
+    iNat_RG_start = ifelse(iNat_RG_START== 1 | iNat_RG_START == "iNat-not-gbif", TRUE, NA),
+    iNat_RG_start = ifelse(is.na(iNat_RG_start), FALSE, iNat_RG_start)
+  )
+
+data_for_start <- start %>% select(vouchers = voucher_start, parklist = parklist_start, iNat_RG = iNat_RG_start)
+
+start_fit <- euler(data_for_start)
+plot(start_fit, quantities = FALSE, labels = FALSE)
+plot(start_fit, quantities = TRUE, labels = FALSE)
+
+start_fit
+
+total_count_start <- start_fit$original.values %>% sum()
+
+voucher_start <- start_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "voucher"))
+voucher_start_count <- sum(voucher_start$counts)
+voucher_start_prop <- voucher_start_count / total_count_start
+
+iNat_start <- start_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+
+iNat_start_count <- sum(iNat_start$counts)
+iNat_start_prop <- iNat_start_count / total_count_start
+```
+
+### - ending data
+
+```{r}
+end <- Royal_data %>%
+  filter(final_list == 1) %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1, TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_end <- end %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+end_fit <- euler(data_for_end)
+plot(end_fit, quantities = FALSE, labels = FALSE)
+plot(end_fit, quantities = TRUE, labels = TRUE)
+
+total_count_end <- end_fit$original.values %>% sum()
+iNat_end <- end_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+iNat_end_count <- sum(iNat_end$counts)
+iNat_end_prop <- iNat_end_count / total_count_end
+```
+
+### - ending data - showy
+
+```{r}
+showy <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(broader != "4.monocot") %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1, TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_showy <- showy %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+showy_fit <- euler(data_for_showy)
+plot(showy_fit, quantities = FALSE, labels = FALSE)
+plot(showy_fit, quantities = TRUE, labels = TRUE)
+
+iNat_end_showy <- showy_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+total_count_end_showy <- showy_fit$original.values %>% sum()
+iNat_end_showy_count <- sum(iNat_end_showy$counts)
+iNat_end_showy_prop <- iNat_end_showy_count / total_count_end_showy
+```
+
+### - ending data - graminoids
+
+```{r}
+graminoid <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(broader == "4.monocot") %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1, TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_graminoid <- graminoid %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+graminoid_fit <- euler(data_for_graminoid)
+plot(graminoid_fit, quantities = FALSE, labels = FALSE)
+plot(graminoid_fit, quantities = TRUE, labels = TRUE)
+
+iNat_end_graminoid <- graminoid_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+total_count_end_graminoid <- graminoid_fit$original.values %>% sum()
+iNat_end_graminoid_count <- sum(iNat_end_graminoid$counts)
+iNat_end_graminoid_prop <- iNat_end_graminoid_count / total_count_end_graminoid
+```
+
+### - ending data - natives
+
+```{r}
+native <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(establishment_means == "native") %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1, TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_native <- native %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+native_fit <- euler(data_for_native)
+plot(native_fit, quantities = FALSE, labels = FALSE)
+plot(native_fit, quantities = TRUE, labels = TRUE)
+```
+
+### - ending data - invasives
+
+```{r}
+invasive <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(establishment_means == "invasive") %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1, TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_invasive <- invasive %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+invasive_fit <- euler(data_for_invasive)
+plot(invasive_fit, quantities = FALSE, labels = FALSE)
+plot(invasive_fit, quantities = TRUE, labels = TRUE)
+```
+
+### - ending data - old vouchers only
+
+```{r}
+old_vouchers <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(old_voucher == 1 & is.na(recent_voucher)) %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1 , TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_end_old <- old_vouchers %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+end_old_fit <- euler(data_for_end_old)
+plot(end_old_fit, quantities = TRUE, labels = FALSE)
+plot(end_old_fit, quantities = FALSE, labels = FALSE)
+
+
+total_count_end_old <- end_old_fit$original.values %>% sum()
+iNat_end_old <- end_old_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+iNat_end_old_count <- sum(iNat_end_old$counts)
+iNat_end_old_prop <- iNat_end_old_count / total_count_end_old
+```
+
+### - ending data - old & recent vouchers
+
+```{r}
+old_and_recent_vouchers <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(recent_voucher == 1 & old_voucher == 1) %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1 , TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_end_old_recent <- old_and_recent_vouchers %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+end_old_recent_fit <- euler(data_for_end_old_recent)
+plot(end_old_recent_fit, quantities = TRUE, labels = FALSE)
+plot(end_old_recent_fit, quantities = FALSE, labels = FALSE)
+
+total_count_end_old_recent <- end_old_recent_fit$original.values %>% sum()
+iNat_end_old_recent <- end_old_recent_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+iNat_end_old_recent_count <- sum(iNat_end_old_recent$counts)
+iNat_end_old_recent_prop <- iNat_end_old_recent_count / total_count_end_old_recent
+```
+
+### - ending data - recent vouchers only
+
+```{r}
+recent_vouchers <- Royal_data %>%
+  filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
+  filter(recent_voucher == 1 & is.na(old_voucher)) %>%
+  mutate(
+    voucher_end = ifelse(voucher_END == 1, TRUE, NA),
+    voucher_end = ifelse(is.na(voucher_end), FALSE, voucher_end),
+    parklist_end = ifelse(in_park_END == 1, TRUE, NA),
+    parklist_end = ifelse(is.na(parklist_end), FALSE, parklist_end),
+    iNat_RG_end = ifelse(iNat_RG_END == 1 , TRUE, NA),
+    iNat_RG_end = ifelse(is.na(iNat_RG_end), FALSE, iNat_RG_end)
+  )
+
+data_for_end_recent <- recent_vouchers %>% select(vouchers = voucher_end, parklist = parklist_end, iNat_RG = iNat_RG_end)
+
+end_recent_fit <- euler(data_for_end_recent)
+plot(end_recent_fit, quantities = FALSE, labels = FALSE)
+plot(end_recent_fit, quantities = TRUE, labels = FALSE)
+
+total_count_end_recent <- end_recent_fit$original.values %>% sum()
+iNat_end_recent <- end_recent_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+iNat_end_recent_count <- sum(iNat_end_recent$counts)
+iNat_end_recent_prop <- iNat_end_recent_count / total_count_end_recent
+```
+
+## 8. Pie charts
+
+### - voucher outcomes
+
+1 XX-misapplied re parks & voucher\
+2 XX-misapplied re parks list\
+3 XX-misapplied re voucher\
+4 XX-no voucher, not in park\
+5 XX-synonym re parks & voucher\
+6 XX-synonym re parks list\
+7 XX-synonym re voucher\
+8 add, voucher found during check\
+9 no voucher, but exists in park\
+10 remove, duplicate synonym\
+11 remove, horticultural\
+12 remove, mis-identification\
+13 remove, taxonomic mismatch (weird) 14 remove, wrong coordinates\
+15 retain voucher\
+16 retain, misapplied\
+17 retain, synonym
+
+```{r}
+# summarise voucher outcomes
+voucher_outcomes <- Royal_data %>%
+  select(outcome = voucher_outcome) %>%
+  filter(!is.na(outcome)) %>%
+  filter(stringr::str_starts(outcome, "retain")|stringr::str_starts(outcome, "remove")) %>% 
+  mutate(
+    outcome = case_when(
+      outcome == "retain voucher" ~ "1. retain",
+      outcome == "retain, synonym" ~ "2. retain a synonym",
+      outcome == "retain, misapplied" ~ "3. retain, misapplied",
+      outcome == "remove, wrong coordinates" ~ "4. wrong coordinates",
+      outcome == "remove, mis-identification" ~ "5. wrong ID",
+      outcome == "remove, duplicate synonym" ~ "6. duplicate name",
+      outcome == "remove, taxonomic mismatch (weird)" ~ "7. untraced taxonomic mismatch",
+      outcome == "remove, horticultural" ~ "8. horticultural record"
+      )
+  ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+voucher_outcomes <- voucher_outcomes %>%
+  mutate(percent = 100*outcome_counts / sum(voucher_outcomes$outcome_counts)) %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(voucher_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+
+# summarise add-on outcomes
+add_ons_vouchers <- Royal_data %>%
+  select(outcome = voucher_outcome) %>%
+  filter(!is.na(outcome)) %>%
+  filter(stringr::str_starts(outcome, "add")) %>%
+  mutate(
+    outcome = case_when(
+      outcome == "add, voucher found during check" ~ "add, voucher found checking other lists"
+    )) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+rest_of_circle_vouchers <- sum(voucher_outcomes$outcome_counts) - sum(add_ons_vouchers$outcome_counts)
+
+total_retained_vouchers <- 
+  tibble(
+    outcome = "rest", 
+    outcome_counts = rest_of_circle_vouchers)
+
+add_ons_vouchers <- add_ons_vouchers %>%
+  bind_rows(total_retained_vouchers)
+
+# create add-on wedge via pie chart
+ggplot(add_ons_vouchers, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - parks list outcomes
+
+1 XX-misapplied re parks list\
+2 XX-misapplied re voucher\
+3 XX-misapplied re vouchers, parks\
+4 XX-not on parks list, not in park\
+5 XX-synonym re parks list\
+6 XX-synonym re voucher\
+7 XX-synonym re vouchers, parks\
+8 XX-synonym voucher\
+9 not on parks list, but occurs in park 10 remove, False Report\
+11 remove, duplicate synonym\
+12 remove, wrong per park list\
+13 retain on list\
+14 retain, misapplied\
+15 retain, synonym
+
+```{r}
+# summarise parks list outcomes
+parklist_outcomes <- Royal_data %>%
+  select(outcome = parks_outcome) %>%
+  filter(stringr::str_starts(outcome, "retain")|stringr::str_starts(outcome, "remove")) %>%
+  mutate(outcome = case_when(
+    outcome == "retain on list" ~ "1. retain",
+    outcome == "retain, synonym" ~ "2. retain a synonym",
+    outcome == "retain, misapplied" ~ "3. retain, misapplied",
+    outcome == "remove, False Report" ~ "4. remove, no reliable evidence",
+    outcome == "remove, duplicate synonym" ~ "5. remove, duplicate synonym",
+    outcome == "remove, wrong per park list" ~ "6. remove, wrong per park list"
+          )
+        ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+parklist_outcomes <- parklist_outcomes %>%
+  mutate(percent = (100*outcome_counts) / sum(parklist_outcomes$outcome_counts)) %>%
+  distinct() %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(parklist_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + scale_fill_brewer(palette="Blues")+
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - iNaturalist outcomes
+
+1 XX-misapplied other list\
+2 XX-not in iNat, not in park\
+3 XX-not in iNat, yes in park\
+4 XX-synonym other list\
+5 add, auto-obscured coordinates\
+6 add, manually obscured coordinates 7 needsID-likely correct\
+8 needsID_only_correct\
+9 remove, 01. wrong ID\
+10 remove, 02. wrong coordinates\
+11 remove, 03. horticultural\
+12 retain observation
+
+```{r}
+# summarise iNaturalist outcomes
+iNat_outcomes <- Royal_data %>%
+  select(outcome = iNat_outcome) %>%
+  filter(stringr::str_starts(outcome, "retain")|stringr::str_starts(outcome, "remove")) %>% 
+  mutate(outcome = case_when(
+    outcome == "retain observation" ~ "1. retain",
+    outcome == "retain, but restricted license" ~ "2. retain, restricted",
+    outcome == "remove, 01. wrong ID" ~ "3. wrong ID",
+    outcome == "remove, 02. wrong coordinates" ~ "4. wrong coordinates",
+    outcome == "remove, 03. horticultural" ~ "5. horticultural record",
+    outcome == "remove, 05. duplicate synonym" ~ "6. duplicate synonym"
+    )
+  ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+iNat_outcomes <- iNat_outcomes %>% 
+  mutate(percent = 100*outcome_counts / sum(iNat_outcomes$outcome_counts)) %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(iNat_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + #scale_fill_brewer(palette="Blues")+
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+
+# summarise add-on outcomes
+add_ons_iNat <- Royal_data %>%
+  select(outcome = iNat_outcome) %>%
+  filter(!is.na(outcome)) %>%
+  filter(stringr::str_starts(outcome, "add")|stringr::str_starts(outcome, "needsID")) %>%
+  mutate(
+    outcome = case_when(
+    outcome == "add, auto-obscured coordinates" ~ "1. auto-obscured coordinates",
+    outcome == "add, manually obscured coordinates" ~ "2. manually obscured coordinates",
+    outcome == "needsID_only_correct" ~ "3. needsID correct",
+    outcome == "needsID-likely correct" ~ "4. needsID likely correct",
+    )) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+rest_of_circle_iNat <- sum(iNat_outcomes$outcome_counts) - sum(add_ons_iNat$outcome_counts)
+
+total_retained_iNat <- 
+  tibble(
+    outcome = "rest", 
+    outcome_counts = rest_of_circle_iNat)
+
+add_ons_iNat <- add_ons_iNat %>%
+  bind_rows(total_retained_iNat)
+
+# create add-on wedge via pie chart
+ggplot(add_ons_iNat, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())   
+```
