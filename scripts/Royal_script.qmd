@@ -12,7 +12,7 @@ editor_options:
 library(tidyverse)
 library(eulerr)
 
-Royal_data <- read_csv("data/Royal_all_data.2024.06.11.csv")
+Royal_data <- read_csv("data_Royal/Royal_all_data.2024.06.11.csv")
 ```
 
 names(Royal_data) \[1\] "notes" "accepted_name" "scientific_name" "status"\

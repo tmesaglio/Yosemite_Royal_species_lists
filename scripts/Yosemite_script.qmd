@@ -353,7 +353,6 @@ Yos_data <- read_csv("data_Yosemite/Yosemite_all_data_2024.06.13.csv")
 
 ```{r}
 start <- Yos_data %>%
-  filter(!notes %in% c("needsID-IGNORE")) %>%
   mutate(
     voucher_start = ifelse(voucher_START == 1, TRUE, NA),
     voucher_start = ifelse(is.na(voucher_start), FALSE, voucher_start),
@@ -884,6 +883,16 @@ iNat_graminoid / graminoid
 #### park proportions
 
 ```{r}
+  Yos_data %>% 
+  filter(final_list == 1) %>%
+  distinct(accepted_name, family, establishment_means) %>%
+  write_csv("data_Yosemite/final_Yosemite_list.csv")
+
+  Yos_data %>% 
+  filter(final_list == 1) %>%
+    select(accepted_name, scientific_name, status, family, broader, synonym_matches, establishment_means, count_RG, count_needs_id, in_park_START, voucher_START, iNat_RG_START, in_park_END, voucher_END, iNat_RG_END, old_voucher, recent_voucher, final_list, possibly_valid_needs_ID, iNat_outcome, parks_outcome, voucher_outcome, voucher_obs, voucher_obs_coord, year_first, first_observer, year_last, iNat_needs_ID_only_verdict, symbiota, voucher_notes = notes_about_vouchers, iNat_notes, parklist_notes = notes_for_parks_only) %>%
+    write_csv("data_Yosemite/Yosemite_with_notes.csv")
+
 park_and_old <- 
   Yos_data %>% 
   filter(final_list == 1, old_voucher == 1, is.na(recent_voucher)) %>% 
