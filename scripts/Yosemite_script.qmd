@@ -922,4 +922,12 @@ new_only - park_and_new
 
 total_species_count - final_park_count
 
+Yos_data %>%
+  filter(final_list == 1) %>%
+  filter(!(recent_voucher == 1 & is.na(old_voucher)))%>% 
+  filter(in_park_END == 1)
+
+1301/1390
+
+
 ```

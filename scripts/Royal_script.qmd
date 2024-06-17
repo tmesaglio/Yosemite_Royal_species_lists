@@ -60,6 +60,7 @@ voucher_start_count <- sum(voucher_start$counts)
 voucher_start_prop <- voucher_start_count / total_count_start
 
 iNat_start <- start_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
+
 iNat_start_count <- sum(iNat_start$counts)
 iNat_start_prop <- iNat_start_count / total_count_start
 ```
