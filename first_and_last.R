@@ -83,7 +83,7 @@ roy<-ggplot(a) +
   # Add sum line
   geom_line(aes(x = date, y = all_cumm)) +
   theme_bw() +
-  ylab("Cummulative number of species on all-time list") +
+  ylab("Cummulative number of documented species on all-time list\n(specimens+photographs)") +
   xlab("")+
   ggtitle("Royal National Park")+
   # Customizing the legend for fills
