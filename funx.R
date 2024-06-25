@@ -101,9 +101,9 @@ read_in_and_filter2 <- function(obs_path, kml) {
 
 get_cummulative_sum <- function(kalb) {
   kalb %>%
-    mutate(date = year(as.Date(ldate))) %>%  # Ensure the date is in Date format
-    arrange(date) %>%                 # Arrange data by date
-    group_by(date) %>%
+   # mutate(date = year(as.Date(ldate))) %>%  # Ensure the date is in Date format
+    arrange(ldate) %>%                 # Arrange data by date
+    group_by(ldate) %>%
     summarise(count = n()) %>%        # Count records per date
     mutate(cumulative_count = cumsum(count))  # Cumulative count
 }

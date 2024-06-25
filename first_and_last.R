@@ -4,7 +4,12 @@ library(zoo)
 library(patchwork)
 source("funx.R")
 royal<-read_csv("data_Royal/royal_all_vouchers_curated.csv")
+length(unique(royal$species))
+
 royal_inat<-read_csv("data_Royal/inat_rg_27may2024.csv")
+length(unique(royal_inat$taxon_species_name))
+all_time_list<-unique(c(royal$species,royal_inat$taxon_species_name))
+
 royal<-fix_dates(royal) %>%
   filter(year>=1840)
 royal_inat$ldate<-dmy(royal_inat$observed_on)
@@ -29,22 +34,25 @@ b<-ggplot(yos,aes(x=year))+geom_histogram(binwidth=1)+xlim(c(1838,2023))+
 a/b
 
 
+
+
 royal_inat$type="iNat"
-
-
+royal_inat$year <-year(dmy(royal_inat$observed_on))
 royal %>%
-  mutate(year=year(ldate),type="voucher")%>%
-  select(species,year,type,ldate) %>%
-  rbind(select(royal_inat,species=taxon_species_name,year,type,ldate)) %>%
+  mutate(year=year,type="voucher")%>%
+  select(species,year,type) %>%
+  rbind(select(royal_inat,species=taxon_species_name,year,type)) %>%
   group_by(species) %>%
   filter(!is.na(year)) %>%
   slice_min(year, with_ties = FALSE, n = 1)-> first_royal
 
+all_time_list[!all_time_list %in% first_royal$species]
 
+first_royal$ldate<-first_royal$year
 
-cumm_herb<-get_cummulative_sum(filter(first_royal,type=="voucher"))
-cumm_herb<-rbind(cumm_herb,data.frame(date=2014,count=0,cumulative_count=957))
-cumm_herb<-arrange(cumm_herb,date)
+cumm_herb<-get_cummulative_sum(select(filter(first_royal,type=="voucher"),ldate,species))
+cumm_herb<-rbind(cumm_herb,data.frame(ldate=c(1988,2014),count=c(0,0),cumulative_count=c(943,1009)))
+cumm_herb<-arrange(cumm_herb,ldate)
 
 cumm_herb$record<-"citizenScienceHerb"
 
@@ -52,8 +60,9 @@ cumm_herb$record<-"citizenScienceHerb"
 cumm_inat<-get_cummulative_sum(filter(first_royal,type=="iNat"))
 cumm_inat$record<-"citizenScienceInat"
 
-a<-full_join(cumm_herb,cumm_inat,by="date") 
-
+a<-full_join(cumm_herb,cumm_inat,by="ldate") 
+a$date<-a$ldate
+a<-filter(a,date>1835)
 a$cumulative_count.y[1]<-0
 a$inat_cumm<-na.locf(a$cumulative_count.y)
 a$herb_cumm<-na.locf(a$cumulative_count.x)
