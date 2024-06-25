@@ -147,7 +147,7 @@ y2$inat <- "cch2"
 y$inat <- case_when(y$inat == TRUE ~ "inat",
                     .default = "gbif herbarium")
 
-tnrs <- read_csv("occ_data/tnrs_result.csv")
+tnrs <- read_csv("occ_data/gbif_yos_tnrs.csv")
 tnrs$species <- tnrs$Name_submitted
 y4 <- left_join(y2, tnrs) %>%
   filter(!species %in% c("", " "))

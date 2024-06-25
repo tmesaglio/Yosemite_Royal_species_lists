@@ -41,12 +41,12 @@ read_in_and_filter <- function(obs_path, kml) {
 
 fix_dates <- function(kalb) {
   kalb$ldate <- dmy(paste(kalb$day, kalb$month, kalb$year, sep = "-"))
-  problem <- filter(kalb, is.na(ldate))
-  kalb$ldate <- case_when(is.na(kalb$ldate) ~ ymd(kalb$eventDate),
-                          .default = kalb$ldate)
-  kalb$ldate <-
-    case_when(is.na(kalb$ldate) ~ dmy(paste(31, 12, kalb$year)),
-              .default = kalb$ldate)
+  #problem <- filter(kalb, is.na(ldate))
+  #kalb$ldate <- case_when(is.na(kalb$ldate) ~ ymd(kalb$eventDate),
+#                          .default = kalb$ldate)
+  #kalb$ldate <-
+   # case_when(is.na(kalb$ldate) ~ dmy(paste(31, 12, kalb$year)),
+  #            .default = kalb$ldate)
   return(kalb)
 }
 
