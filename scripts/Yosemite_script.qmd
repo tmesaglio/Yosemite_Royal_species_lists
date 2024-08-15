@@ -13,6 +13,9 @@ library(tidyverse)
 library(eulerr)
 library(sf)
 library(data.table)
+library(rgdal)
+library(cowplot)
+library(lubridate)
 source("funx.R")
 ```
 
@@ -928,6 +931,123 @@ Yos_data %>%
   filter(in_park_END == 1)
 
 1301/1390
+```
 
+# PAPER 2
+``` {r}
+library(sf)
+library(rmapshaper)
+library(tidyverse)
+library(gridExtra)
 
+Yos_iNat <- read_csv("data_Yosemite/Yosemite_ResearchGrade.csv")
+
+Yos_paper_2 <- Yos_data %>%
+  filter(voucher_END == "1" | iNat_RG_END == "1")
+
+Yos_old_only <- Yos_paper_2 %>%
+  filter(is.na(recent_voucher) & is.na(iNat_RG_END))
+
+old_voucher_locations <- CCH2_data %>%
+  filter(current_name %in% Yos_old_only$accepted_name, keep_omit == "keep") %>%
+  filter(!is.na(decimalLatitude)) %>%
+  arrange(-year) %>%
+  group_by(current_name) %>%
+  summarise_all(.funs = first) %>%
+  distinct() %>%
+  ungroup() %>%
+  left_join(Yos_old_only %>% select(current_name = accepted_name, establishment_means))
+
+Yos_recent_only <- Yos_paper_2 %>%
+  filter(is.na(old_voucher) & (iNat_RG_END == "1" | recent_voucher == "1"))
+
+iNat_recent_additions <- Yos_iNat %>%
+  select(scientific_name, observed_on, latitude, longitude) %>%
+  filter(scientific_name %in% Yos_recent_only$accepted_name)
+  
+CCH_recent_additions <- CCH2_data %>%
+  filter(current_name %in% Yos_recent_only$accepted_name, keep_omit == "keep") %>%
+  filter(!is.na(decimalLatitude), decimalLatitude > 37) %>%
+  arrange(year) %>%
+  group_by(current_name) %>%
+  summarise_all(.funs = first) %>%
+  distinct() %>%
+  ungroup() %>%
+  select(scientific_name = current_name, observed_on = year, latitude = decimalLatitude , longitude = decimalLongitude) %>%
+  mutate(observed_on = lubridate::make_date(observed_on, 1, 1))
+
+recent_additions_all <- iNat_recent_additions %>%
+  bind_rows(CCH_recent_additions) %>%
+  left_join(Yos_recent_only %>% select(scientific_name = accepted_name, establishment_means)) %>%
+  arrange(observed_on) %>%
+  group_by(scientific_name) %>%
+  summarise_all(.funs = first) %>%
+  distinct() %>%
+  ungroup() %>%
+  filter
+
+yosemite_outline <- st_read("data_Yosemite/Yosemite.shp") %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
+yos_roads <- st_read("data_Yosemite/Yosemite_roads.gpx", layer = "tracks") %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
+yos_roads_clipped <- rmapshaper::ms_clip(target = yos_roads, clip = yosemite_outline[1])
+
+establish_colours <-  c("native" = "#6A51A3", "invasive" = "red")
+
+long_unseen <-
+  ggplot() + 
+  geom_sf(mapping = aes(), data = yosemite_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
+  geom_sf(mapping = aes(), data = yos_roads_clipped, stat = "sf") +
+  geom_point(aes(decimalLongitude, decimalLatitude, col = factor(establishment_means)), data = old_voucher_locations, position = "jitter") +
+  scale_colour_manual(values = establish_colours, name = "origin") +
+  theme_classic() + 
+  ggtitle("a. Last location long-unseen species (Yosemite)") +
+  theme(
+    legend.position = "none",
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    plot.margin=unit(c(.08,.0,.0,.1),"cm")
+  )
+
+new_arrivals_tmp <-
+  ggplot() + 
+  geom_sf(mapping = aes(), data = yosemite_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
+  geom_sf(mapping = aes(), data = yos_roads_clipped, stat = "sf") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means)), data = recent_additions_all, position = "jitter") +
+  scale_colour_manual(values = establish_colours, name = "species origin") +
+  theme_classic() +
+  ggtitle("b. First location post-1990 new records (Yosemite)") +
+  theme(
+    legend.position = "bottom",
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    plot.margin=unit(c(.08,.0,.0,.0),"cm")
+  )
+
+legend_maps <- get_legend(new_arrivals_tmp) #+ theme(legend.margin = margin(2, 2, 2, 2))
+
+new_arrivals <- new_arrivals_tmp + theme(legend.position = "none")
+
+Yos_maps_combined <- ggdraw(plot_grid(long_unseen, new_arrivals, ncol=2, align='v', rel_widths=c(1, 1)))
+
+blank <- grid::rectGrob(gp=gpar(fill="white", col = "white"))
+
+Yos_maps <- grid.arrange(
+  long_unseen, new_arrivals, legend_maps, blank,
+  ncol = 2, 
+  widths = c(1, 1),
+  heights = c(1, 0.08)
+)
+
+cowplot::save_plot("outputs/Yos_maps.jpg", Yos_maps, base_width = 8, base_height = 5)
 ```
