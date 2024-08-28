@@ -14,20 +14,41 @@ royal<-fix_dates(royal) %>%
   filter(year>=1840)
 royal_inat$ldate<-dmy(royal_inat$observed_on)
 royal_inat$year<-year(royal_inat$ldate)
-yos<-read_csv("data_Yosemite/Yosemite_CCH_records_2024.06.14.csv") %>%
-  filter(keep_omit=="keep",taxonRank=="Species") %>%
-  fix_dates()
-yos_inat<-yos_media%>% #needs to be updated
-  filter(institutionCode=="iNaturalist") %>%
-  mutate(type="iNaturalist") %>%
-  fix_dates()
+yos<-read_csv("data_Yosemite/Yosemite_all_data_2024.06.13.csv") 
+yos_keep<-yos %>% filter(final_list==1)
+
+unique(yos_keep$iNat_RG_START)
+
+library(forcats)
+
+# Reorder species by first_record and convert first_record and last_record to numeric
+yos_keep_filtered <- yos_keep %>%
+  mutate(first_record = as.numeric(first_record),
+last_record = as.numeric(last_record)) %>%
+  filter(!is.na(first_record)) %>%
+  mutate(
+         accepted_name = fct_reorder(accepted_name, first_record))
+
+# Create the plot
+ggplot(yos_keep_filtered, aes(y = accepted_name)) +
+  geom_segment(aes(x = first_record, xend = last_record, 
+                   yend = accepted_name,col=establishment_means), 
+                size = 0.5) +
+  labs(x = "Year", y = "Species", 
+       title = "First and Last Records of Species") +
+  theme_minimal() +
+  #facet_wrap(.~broader,scales="free")+
+  theme(axis.text.y = element_text(size = 2))  # Reduce y-axis text size
+
+
+
 
 
 a<-ggplot(data=royal,aes(x=year))+geom_histogram(binwidth=1)+xlim(c(1838,2023))+
  geom_histogram(data=royal_inat,aes(x=year),binwidth=1,fill="red",alpha=0.2)+
   theme_bw()+labs(title="Royal NP",y="Number of records per year")
 
-b<-ggplot(yos,aes(x=year))+geom_histogram(binwidth=1)+xlim(c(1838,2023))+
+b<-ggplot(yos_keep,aes(x=year_first))+geom_histogram(binwidth=1)+xlim(c(1838,2023))+
   geom_histogram(data=yos_inat,aes(x=year),binwidth=1,fill="red",alpha=0.2)+
   theme_bw()+labs(title="Yosemite NP",y="Number of records per year")
 
