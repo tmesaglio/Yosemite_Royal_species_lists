@@ -3,17 +3,7 @@ library(lubridate)
 library(zoo)
 library(patchwork)
 source("funx.R")
-royal<-read_csv("data_Royal/royal_all_vouchers_curated.csv")
-length(unique(royal$species))
 
-royal_inat<-read_csv("data_Royal/inat_rg_27may2024.csv")
-length(unique(royal_inat$taxon_species_name))
-all_time_list<-unique(c(royal$species,royal_inat$taxon_species_name))
-
-royal<-fix_dates(royal) %>%
-  filter(year>=1840)
-royal_inat$ldate<-dmy(royal_inat$observed_on)
-royal_inat$year<-year(royal_inat$ldate)
 yos<-read_csv("data_Yosemite/Yosemite_all_data_2024.08.28.csv") 
 yos_keep <- yos %>%
    filter(voucher_END == "1" | iNat_RG_END == "1") %>%
@@ -21,22 +11,42 @@ yos_keep <- yos %>%
 
 library(forcats)
 
-# Reorder species by first_record and convert first_record and last_record to numeric
 yos_keep_filtered <- yos_keep %>%
   mutate(year_first = as.numeric(year_first),
-         year_last = as.numeric(year_last)) %>%
-  filter(!is.na(year_first)) %>%
-  mutate(accepted_name = fct_reorder(accepted_name, year_first))
+         year_last = as.numeric(year_last))
 
-yos_keep_filtered$last_year_all<-ifelse(is.na(yos_keep_filtered$iNat_year_last)|yos_keep_filtered$year_last>yos_keep_filtered$iNat_year_last,
-                                        yos_keep_filtered$year_last,
-                                        yos_keep_filtered$iNat_year_last)
+yos_keep_filtered$first_year_all <- ifelse(
+  is.na(yos_keep_filtered$year_first) | 
+    (yos_keep_filtered$iNat_year_first < yos_keep_filtered$year_first & !is.na(yos_keep_filtered$iNat_year_first)),
+  as.numeric(yos_keep_filtered$iNat_year_first),
+  as.numeric(yos_keep_filtered$year_first)
+)
 
+
+yos_keep_filtered$last_year_all <- ifelse(
+  is.na(yos_keep_filtered$year_last) | 
+    (yos_keep_filtered$iNat_year_last > yos_keep_filtered$year_last & !is.na(yos_keep_filtered$iNat_year_last)),
+  as.numeric(yos_keep_filtered$iNat_year_last),
+  as.numeric(yos_keep_filtered$year_last)
+)
+
+# Reorder species by first_record and convert first_record and last_record to numeric
+
+yos_keep_filtered %>%
+  filter(!is.na(first_year_all)) %>%
+  mutate(accepted_name = fct_reorder(accepted_name, first_year_all))->yos_keep_filtered
+
+
+long_unobserved<-filter(yos_keep_filtered,last_year_all<1990)
+table(long_unobserved$establishment_means)
+
+a<-filter(yos_keep_filtered,first_year_all>1990)
+table(a$establishment_means)
 
 # Create the plot
 library(ggplot2)
 
-ggplot(yos_keep_filtered, aes(y = accepted_name)) +
+yos_plot<-ggplot(yos_keep_filtered, aes(y = accepted_name)) +
   geom_segment(aes(x = year_first, xend = year_last, 
                    yend = accepted_name), col="#608CB8",
                size = 0.2) +
@@ -47,27 +57,78 @@ ggplot(yos_keep_filtered, aes(y = accepted_name)) +
   ylab("") +
   ggtitle("") +
   scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
-  scale_color_manual(values = c("native" = "#A6CEE3",
-                                "invasive" = "#1F78B4")) +  # Manual colors for establishment_means
-  theme(axis.text.y = element_blank(),    # Remove y-axis text
+  geom_point(
+             aes(x = year_first), col = "lightgrey", size = 0.4) +
+  geom_point(data = yos_keep_filtered, 
+             aes(x = last_year_all), size = 0.4, col = "black") +
+  labs(x = "Year") +
+  theme_classic() +
+  ylab("") +
+  ggtitle("Yosemite") +
+  scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
+   theme(axis.text.y = element_blank(),    # Remove y-axis text
         axis.ticks.y = element_blank(),
         panel.grid.major.y = element_blank(),  # Remove major y-axis grid lines
         panel.grid.minor.y = element_blank(),  # Remove minor y-axis grid lines
         axis.line.y = element_blank(),
         axis.line.x = element_blank(),
-        legend.position = "none") +
-  geom_point(
-             aes(x = year_first), col = "lightgrey", size = 0.4) +
-  geom_point(data = yos_keep_filtered, 
-             aes(x = last_year_all), size = 0.4, col = "black") +
-  labs(x = "Year", y = "Species", 
-       title = "First and Last Records of Species") +
+        legend.position = "none")  # Remove the legend
+ggsave("testing.png",width=8,height=10)
+ggsave("testing.svg",width=8,height=8)
+
+
+library(xlsx)
+roy<-read.xlsx("data_Royal/Royal master species list_version2.xlsx",1)
+table(roy$establishment_means)
+
+
+roy$first_year_all <- ifelse(
+  is.na(roy$first_voucher) | 
+    (roy$first_iNat < roy$first_voucher & !is.na(roy$first_iNat)),
+  as.numeric(roy$first_iNat),
+  as.numeric(roy$first_voucher)
+)
+
+newly_discovered_royal<-filter(roy,first_year_all>=1990)
+table(newly_discovered_royal$establishment_means)
+write_csv(newly_discovered_royal,"newly_discovered_royal.csv")
+
+
+roy$last_year_all <- ifelse(
+  is.na(roy$last_voucher) | 
+    (roy$last_iNat > roy$last_voucher & !is.na(roy$last_iNat)),
+  as.numeric(roy$last_iNat),
+  as.numeric(roy$last_voucher)
+)
+
+long_unobserved_royal<-filter(roy,last_year_all<1990)
+table(long_unobserved_royal$establishment_means)
+write_csv(long_unobserved_royal,"long_unobserved_royal.csv")
+
+# Reorder species by first_record and convert first_record and last_record to numeric
+
+roy %>%
+  filter(!is.na(first_year_all)) %>%
+  mutate(scientific_name = fct_reorder(scientific_name, first_year_all))->roy_keep_filtered
+
+
+roy_plot<-ggplot(roy_keep_filtered, aes(y = scientific_name)) +
+  geom_segment(aes(x = first_voucher, xend = last_voucher, 
+                   yend = scientific_name), col="#608CB8",
+               size = 0.2) +
+  geom_segment(aes(x = first_iNat, xend = last_iNat, 
+                   yend = scientific_name), col = "#74AC00",
+               size = 0.2) +
+  scale_x_continuous(breaks = seq(1810, 2010, by = 20)) + 
+  geom_point(data=roy_keep_filtered,
+    aes(x = first_year_all,y = scientific_name), col = "lightgrey", size = 0.4) +
+  geom_point(data=roy_keep_filtered,
+             aes(x = last_year_all,y = scientific_name), size = 0.4, col = "black") +
+  labs(x = "Year") +
   theme_classic() +
   ylab("") +
-  ggtitle("") +
+  ggtitle("Royal") +
   scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
-  scale_color_manual(values = c("native" = "#A6CEE3",
-                                "invasive" = "#1F78B4")) +  # Manual colors for establishment_means
   theme(axis.text.y = element_blank(),    # Remove y-axis text
         axis.ticks.y = element_blank(),
         panel.grid.major.y = element_blank(),  # Remove major y-axis grid lines
@@ -75,7 +136,14 @@ ggplot(yos_keep_filtered, aes(y = accepted_name)) +
         axis.line.y = element_blank(),
         axis.line.x = element_blank(),
         legend.position = "none")  # Remove the legend
-ggsave("testing.png",width=8,height=8)
+  ylab("") 
+library(patchwork)
+yos_plot +roy_plot  
+ggsave("testing.png",width=12,height=10)
+ggsave("testing.svg",width=8,height=8)
+
+
+
 
 
 
