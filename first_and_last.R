@@ -147,7 +147,7 @@ ggsave("testing.svg",width=8,height=8)
 
 
 
-a<-ggplot(data=royal,aes(x=year))+geom_histogram(binwidth=1)+xlim(c(1838,2023))+
+a<-ggplot(data=roy_keep_filtered,aes(x=year))+geom_histogram(binwidth=1)+xlim(c(1838,2023))+
  geom_histogram(data=royal_inat,aes(x=year),binwidth=1,fill="red",alpha=0.2)+
   theme_bw()+labs(title="Royal NP",y="Number of records per year")
 
@@ -156,9 +156,12 @@ b<-ggplot(yos_keep,aes(x=year_first))+geom_histogram(binwidth=1)+xlim(c(1838,202
   theme_bw()+labs(title="Yosemite NP",y="Number of records per year")
 
 a/b
+yos_keep_filtered$establishment_means[yos_keep_filtered$establishment_means=="invasive"]<-"introduced"
 
+z<-bind_rows(select(yos_keep_filtered,establishment_means,first_year_all)%>%mutate(park="Yosemite"),
+          select(roy_keep_filtered,establishment_means,first_year_all)%>%mutate(park="Royal"))
 
-
+ggplot(z,aes(x=first_year_all,fill=establishment_means))+geom_histogram(binwidth = 3)+facet_grid(park~.)+theme_minimal()+labs(x="Year of first documentation",y="Number of species")
 
 royal_inat$type="iNat"
 royal_inat$year <-year(dmy(royal_inat$observed_on))
