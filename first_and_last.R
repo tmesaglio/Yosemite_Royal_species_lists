@@ -14,33 +14,68 @@ royal<-fix_dates(royal) %>%
   filter(year>=1840)
 royal_inat$ldate<-dmy(royal_inat$observed_on)
 royal_inat$year<-year(royal_inat$ldate)
-yos<-read_csv("data_Yosemite/Yosemite_all_data_2024.06.13.csv") 
-yos_keep<-yos %>% filter(final_list==1)
-
-unique(yos_keep$iNat_RG_START)
+yos<-read_csv("data_Yosemite/Yosemite_all_data_2024.08.28.csv") 
+yos_keep <- yos %>%
+   filter(voucher_END == "1" | iNat_RG_END == "1") %>%
+  filter(accepted_name!="Mentha arvensis")
 
 library(forcats)
 
 # Reorder species by first_record and convert first_record and last_record to numeric
 yos_keep_filtered <- yos_keep %>%
-  mutate(first_record = as.numeric(first_record),
-last_record = as.numeric(last_record)) %>%
-  filter(!is.na(first_record)) %>%
-  mutate(
-         accepted_name = fct_reorder(accepted_name, first_record))
+  mutate(year_first = as.numeric(year_first),
+         year_last = as.numeric(year_last)) %>%
+  filter(!is.na(year_first)) %>%
+  mutate(accepted_name = fct_reorder(accepted_name, year_first))
+
+yos_keep_filtered$last_year_all<-ifelse(is.na(yos_keep_filtered$iNat_year_last)|yos_keep_filtered$year_last>yos_keep_filtered$iNat_year_last,
+                                        yos_keep_filtered$year_last,
+                                        yos_keep_filtered$iNat_year_last)
+
 
 # Create the plot
+library(ggplot2)
+
 ggplot(yos_keep_filtered, aes(y = accepted_name)) +
-  geom_segment(aes(x = first_record, xend = last_record, 
-                   yend = accepted_name,col=establishment_means), 
-                size = 0.5) +
+  geom_segment(aes(x = year_first, xend = year_last, 
+                   yend = accepted_name), col="#608CB8",
+               size = 0.2) +
+  geom_segment(aes(x = iNat_year_first, xend = iNat_year_last, 
+                   yend = accepted_name), col = "#74AC00",
+               size = 0.2) +
+  theme_classic() +
+  ylab("") +
+  ggtitle("") +
+  scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
+  scale_color_manual(values = c("native" = "#A6CEE3",
+                                "invasive" = "#1F78B4")) +  # Manual colors for establishment_means
+  theme(axis.text.y = element_blank(),    # Remove y-axis text
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank(),  # Remove major y-axis grid lines
+        panel.grid.minor.y = element_blank(),  # Remove minor y-axis grid lines
+        axis.line.y = element_blank(),
+        axis.line.x = element_blank(),
+        legend.position = "none") +
+  geom_point(
+             aes(x = year_first), col = "lightgrey", size = 0.4) +
+  geom_point(data = yos_keep_filtered, 
+             aes(x = last_year_all), size = 0.4, col = "black") +
   labs(x = "Year", y = "Species", 
        title = "First and Last Records of Species") +
-  theme_minimal() +
-  #facet_wrap(.~broader,scales="free")+
-  theme(axis.text.y = element_text(size = 2))  # Reduce y-axis text size
-
-
+  theme_classic() +
+  ylab("") +
+  ggtitle("") +
+  scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
+  scale_color_manual(values = c("native" = "#A6CEE3",
+                                "invasive" = "#1F78B4")) +  # Manual colors for establishment_means
+  theme(axis.text.y = element_blank(),    # Remove y-axis text
+        axis.ticks.y = element_blank(),
+        panel.grid.major.y = element_blank(),  # Remove major y-axis grid lines
+        panel.grid.minor.y = element_blank(),  # Remove minor y-axis grid lines
+        axis.line.y = element_blank(),
+        axis.line.x = element_blank(),
+        legend.position = "none")  # Remove the legend
+ggsave("testing.png",width=8,height=8)
 
 
 
