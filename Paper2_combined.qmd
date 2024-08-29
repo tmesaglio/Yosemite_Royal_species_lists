@@ -1,0 +1,640 @@
+## Libraries
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(data.table)
+
+# spatial
+library(sf)
+library(rgdal)
+library(rmapshaper)
+
+# plotting
+library(eulerr)
+library(cowplot)
+library(scales)
+library(gridExtra)
+library(grid)
+
+setwd("C:/Users/Lizzy/Documents/GitHub/wa_inat_plants/")
+```
+
+## Read in Yosemite data
+
+```{r}
+#setwd("C:/Users/Lizzy/Documents/GitHub/wa_inat_plants/")
+
+Yos_species_list <- read_csv("data_Yosemite/Yosemite_all_data_2024.08.28.csv")
+
+Yos_species_paper_2 <- Yos_species_list %>%
+  filter(voucher_END == "1" | iNat_RG_END == "1")
+
+Yos_iNat <- read_csv("data_Yosemite/Yosemite_ResearchGrade.csv") %>%
+  mutate(accepted_name = stringr::word(scientific_name, start = 1, end = 2))
+  
+Yosemite_synonym_lookup <- read_csv("data_Yosemite/Yosemite_synonyms_lookup_2024.06.11.csv") %>%
+  select(scientificName = starting_name, current_name, name_source)
+
+CCH2_data <- read_csv("data_Yosemite/Yosemite_CCH_records_2024.06.14.csv") %>%
+  filter(phylum == "Tracheophyta") %>%                  # retain only vascular plants
+  filter(keep_omit == c("keep")) %>%                    # retain only valid vouchers
+  filter(year > 1859) %>%                               # remove garbage years
+  filter(recordedBy != "Gill, Raymond J.") %>%          # remove collection with photographic observations only
+  filter(stringr::str_detect(scientificName, " ")) %>%  # remove genera
+  left_join(Yosemite_synonym_lookup) %>%
+  select(current_name, scientificName, keep_omit, institutionCode, recordedBy_simple, eventDate, year, locality, institutionCode, 
+         recordNumber, decimalLatitude, decimalLongitude, recordedBy, county) %>%
+  filter(!is.na(current_name))
+
+gbif_to_include <- read_csv("data_Yosemite/Yosemite_GBIF_records_2024.06.14.csv") %>%
+  filter(keep_omit == "keep") %>% 
+  rename(scientificName = scientific_name)
+
+voucher_data <- CCH2_data %>%
+  bind_rows(gbif_to_include)
+```
+
+## Read in Royal data
+
+```{r}
+Royal_observers <- read_csv("data_Royal/species_per_collector.csv")
+```
+
+## Figure 1. Maps of long unobserved, recent finds
+
+```{r}
+establish_colours <-  c("native" = "#6A51A3", "introduced" = "red")
+source_shapes <-  c("iNat" = 17, "voucher" = 16)
+
+Yos_old_only <- Yos_species_paper_2 %>%
+  filter(is.na(recent_voucher) & is.na(iNat_RG_END)) %>%
+  mutate(establishment_means = ifelse(establishment_means == "invasive", "introduced", establishment_means))
+
+old_voucher_locations <- CCH2_data %>%
+  filter(current_name %in% Yos_old_only$accepted_name, keep_omit == "keep") %>%
+  # turning off so that I retain actual final location and will manually fill in locations
+  #filter(!is.na(decimalLatitude)) %>%   
+  arrange(-year) %>%
+  group_by(current_name) %>%
+  summarise_all(.funs = first) %>%
+  distinct() %>%
+  ungroup() %>%
+  left_join(Yos_old_only %>% select(current_name = accepted_name, establishment_means))
+
+#old_voucher_locations %>% write_csv("data_Yosemite/Yosemite_long_unseen_last_location.csv")
+
+old_voucher_locations <- read_csv("data_Yosemite/Yosemite_long_unseen_last_location.csv") %>%
+  mutate(source = "voucher")
+
+Yos_recent_only <- Yos_species_paper_2 %>%
+  filter(is.na(old_voucher) & (iNat_RG_END == "1" | recent_voucher == "1"))
+
+iNat_recent_additions <- Yos_iNat %>%
+  select(scientific_name, observed_on, latitude, longitude) %>%
+  filter(scientific_name %in% Yos_recent_only$accepted_name) %>%
+  mutate(source = "iNat")
+  
+CCH_recent_additions <- CCH2_data %>%
+  filter(current_name %in% Yos_recent_only$accepted_name, keep_omit == "keep") %>%
+  # turning off so that I retain actual final location and will manually fill in locations
+  #filter(!is.na(decimalLatitude), decimalLatitude > 37) %>%
+  arrange(year) %>%
+  group_by(current_name) %>%
+  summarise_all(.funs = first) %>%
+  distinct() %>%
+  ungroup() %>%
+  select(scientific_name = current_name, observed_on = year, latitude = decimalLatitude , longitude = decimalLongitude) %>%
+  mutate(observed_on = lubridate::make_date(observed_on, 1, 1))
+
+#CCH_recent_additions %>% write_csv("data_Yosemite/Yosemite_CCH_recent_additions.csv")
+
+CCH_recent_additions <- read_csv("data_Yosemite/Yosemite_CCH_recent_additions.csv") %>% mutate(source = "voucher")
+
+recent_additions_all <- iNat_recent_additions %>%
+  bind_rows(CCH_recent_additions) %>%
+  left_join(Yos_recent_only %>% select(scientific_name = accepted_name, establishment_means)) %>%
+  arrange(observed_on) %>%
+  group_by(scientific_name) %>%
+  summarise_all(.funs = first) %>%
+  ungroup() %>%
+  distinct()
+
+yosemite_outline <- st_read("data_Yosemite/Yosemite.shp") %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
+yos_roads <- st_read("data_Yosemite/Yosemite_roads.gpx", layer = "tracks") %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
+yos_roads_clipped <- rmapshaper::ms_clip(target = yos_roads, clip = yosemite_outline[1])
+
+Yos_long_unseen <- 
+  ggplot() + 
+  geom_sf(mapping = aes(), data = yosemite_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
+  geom_sf(mapping = aes(), data = yos_roads_clipped, stat = "sf") +
+  geom_point(aes(decimalLongitude, decimalLatitude, col = factor(establishment_means)), data = old_voucher_locations, position = "jitter") +
+  scale_colour_manual(values = establish_colours, name = "origin") +
+  theme_classic() + 
+  ggtitle("b. Yosemite") +
+  theme(
+    legend.position = "none",
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    plot.margin=unit(c(.03,.0,.0,.1),"cm")
+  )
+
+Yos_new_discoveries_tmp <-
+  ggplot() + 
+  geom_sf(mapping = aes(), data = yosemite_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
+  geom_sf(mapping = aes(), data = yos_roads_clipped, stat = "sf") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means), shape = factor(source)), data = recent_additions_all, position = "jitter") +
+  scale_colour_manual(values = establish_colours, name = "species origin") +
+  scale_shape_manual(values = source_shapes, name = "data source") +
+  theme_classic() +
+  ggtitle("d. Yosemite") +
+  theme(
+    legend.position = "bottom",
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    plot.margin=unit(c(.03,.0,.0,.1),"cm")
+  )
+
+legend_maps <- get_legend(Yos_new_discoveries_tmp) #+ theme(legend.margin = margin(2, 2, 2, 2))
+
+Yos_new_discoveries <- Yos_new_discoveries_tmp + theme(legend.position = "none")
+```
+
+```{r}
+royal_location <- read_csv("data_Royal/Royal_locations_first_late.csv")
+establish_colours2 <-  c("native" = "#6A51A3", "introduced" = "red")
+source_shapes <-  c("iNat" = 17, "voucher" = 16)
+
+Royal_long_unseen_locations <- royal_location %>%
+  filter(category == "long unseen", `record type` == "voucher")
+
+Royal_recent_additions_all <- royal_location %>%
+  filter(category == "new discovery") %>%
+  rename(source = `record type`)
+
+royal_outline <- st_read("data_Royal/Royal_outline.shp") %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
+royal_roads <- st_read("data_Royal/Royal_roads.gpx", layer = "tracks") %>%
+  st_transform(crs = 4326) %>%
+  st_make_valid()
+
+royal_roads_clipped <- rmapshaper::ms_clip(target = royal_roads, clip = royal_outline[1])
+
+Royal_long_unseen <-
+  ggplot() + 
+  geom_sf(mapping = aes(), data = royal_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
+  geom_sf(mapping = aes(), data = royal_roads_clipped, stat = "sf") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means)), data = Royal_long_unseen_locations, position = "jitter") +
+  scale_colour_manual(values = establish_colours2, name = "origin") +
+  theme_classic() + 
+  ggtitle("a. Royal") +
+  theme(
+    legend.position = "none",
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    plot.margin=unit(c(.03,.0,.0,.1),"cm")
+  )
+
+Royal_new_discoveries <-
+  ggplot() + 
+  geom_sf(mapping = aes(), data = royal_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
+  geom_sf(mapping = aes(), data = royal_roads_clipped, stat = "sf") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means), shape = factor(source)), data = Royal_recent_additions_all, position = "jitter") +
+  scale_colour_manual(values = establish_colours2, name = "species origin") +
+  scale_shape_manual(values = source_shapes, name = "data source") +
+  theme_classic() +
+  ggtitle("c. Royal") +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    axis.line = element_blank(),
+    plot.title = element_text(hjust = 0, size = 10),
+    plot.margin=unit(c(.03,.0,.0,.1),"cm"),
+    legend.position = "none"
+    )
+```
+
+```{r}
+#Yos_maps_combined <- ggdraw(plot_grid(Yos_long_unseen, Yos_new_arrivals, ncol=1, align='v', rel_widths=c(1, 1)))
+
+#blank <- grid::rectGrob(gp = gpar(fill="white", col = "white"))
+
+unseen <- grid.arrange(
+  Royal_long_unseen, Yos_long_unseen,
+  ncol = 2,
+  top = textGrob("Last collection location for long-unseen species", gp = gpar(fontsize = 10), hjust = 1.2)
+  )
+
+new_discoveries <- grid.arrange(
+  Royal_new_discoveries, Yos_new_discoveries,
+  ncol = 2,
+  top = textGrob("First collection location for post-1990 discoveries", gp = gpar(fontsize = 10), hjust = 1.2)
+  )
+
+legend <- grid.arrange(
+  legend_maps, blank,
+  ncol = 2
+  )
+
+all_maps <- grid.arrange(
+  unseen, new_discoveries, legend_maps,
+  ncol = 1, 
+  heights = c(1, 1, 0.08)
+)
+
+cowplot::save_plot("outputs/maps.jpg", all_maps, base_width = 8, base_height = 9)
+```
+
+
+
+## Figure 2. Decline in "unobserved" over time
+
+### - generate data summaries - Yosemite
+
+```{r}
+
+paper2_fig2 <-
+  Yos_species_paper_2 %>%
+  select(accepted_name, establishment_means, voucher_END, iNat_RG_END, old_voucher, recent_voucher) %>%
+  distinct()
+
+# vouchers
+recent_obs_CCH <- CCH2_data %>%
+  filter(keep_omit == "keep", year > 1989) %>%
+  filter(current_name %in% paper2_fig2$accepted_name) %>%
+  select(accepted_name = current_name, year) %>%
+  mutate(dataset = "CCH") %>%
+  arrange(year) %>%
+  distinct(accepted_name, .keep_all = TRUE)
+
+summary_recent_CCH <- recent_obs_CCH %>%
+  group_by(year) %>%
+  mutate(re_finds_per_year = n()) %>%
+  distinct(re_finds_per_year) %>%
+  ungroup()
+
+#write_csv(summary_recent_CCH, "data_Yosemite/summary_recent_CCH.csv")
+
+# iNaturalist
+recent_obs_iNat <- Yos_iNat %>%
+  select(scientific_name, observed_on) %>%
+  mutate(year = year(observed_on)) %>%
+  filter(year > 2007) %>%
+  filter(scientific_name %in% Yos_species_paper_2$accepted_name) %>%
+  select(accepted_name = scientific_name, year) %>%
+  mutate(dataset = "iNat") %>%
+  arrange(year) %>%
+  distinct(accepted_name, .keep_all = TRUE)
+# have confirmed there were no species with pre-2008 observations that haven't been seen since - so filtering changes when species were "ticked off" the iNat list, but not whether they are ticked off the list, at least for Yosemite
+
+summary_recent_iNat <- recent_obs_iNat %>%
+  group_by(year) %>%
+  mutate(re_finds_per_year = n()) %>%
+  distinct(re_finds_per_year) %>%
+  ungroup() 
+
+#write_csv(summary_recent_iNat, "data_Yosemite/summary_recent_iNat.csv")
+
+# combined voucher & iNat
+
+recent_obs_combined <- recent_obs_CCH %>%
+  bind_rows(recent_obs_iNat) %>%
+  arrange(accepted_name, year) %>%
+  mutate(accepted_name = stringr::word(accepted_name, start = 1, end = 2)) %>%
+  group_by(accepted_name) %>%
+  summarise_all(.funs = first) %>%
+  ungroup() %>%
+  arrange(year)
+
+summary_recent_combined <- recent_obs_combined %>%
+  group_by(year) %>%
+  mutate(re_finds_per_year = n()) %>%
+  distinct(re_finds_per_year) %>%
+  ungroup()
+
+#write_csv(summary_recent_combined, "data_Yosemite/summary_recent_combined.csv")
+
+summary_2_lines <- recent_obs_combined %>%
+  mutate(counts = 1) %>%
+  pivot_wider(names_from = dataset, values_from = counts) %>%
+  mutate(
+    iNat = if_else(is.na(iNat), 0, iNat),
+    CCH = if_else(is.na(CCH), 0, CCH)
+    ) %>%
+  select(-accepted_name) %>%
+  group_by(year) %>%
+  mutate(
+    CCH_finds_per_year = sum(CCH),
+    iNat_finds_per_year = sum(iNat)
+    ) %>%
+  select(-CCH, -iNat) %>%
+  distinct() %>%
+  ungroup()
+
+#write_csv(summary_2_lines, "data_Yosemite/summary_2_lines.csv")
+```
+
+### - generate data summaries - Royal
+
+```{r}
+Royal_need_finding <- read_csv("data_Royal/need_to_be_found.csv")
+
+Royal_recent_vouchers <- Royal_need_finding %>%
+  filter(!is.na(First_voucher_since_1990)) %>%
+  arrange(First_voucher_since_1990)
+
+Royal_recent_vouchers_summary <- Royal_recent_vouchers %>%
+  group_by(First_voucher_since_1990) %>%
+  mutate(re_finds_per_year = n()) %>%
+  distinct(re_finds_per_year) %>%
+  ungroup()
+
+#write_csv(Royal_recent_vouchers_summary, "data_Royal/Royal_recent_vouchers_summary.csv")
+
+Royal_recent_iNat <- Royal_need_finding %>%
+  filter(!is.na(First_iNat_since_1990)) %>%
+  arrange(First_iNat_since_1990)
+
+Royal_recent_iNat_summary <- Royal_recent_iNat %>%
+  group_by(First_iNat_since_1990) %>%
+  mutate(re_finds_per_year = n()) %>%
+  distinct(re_finds_per_year) %>%
+  ungroup()
+
+#write_csv(Royal_recent_iNat_summary, "data_Royal/Royal_recent_iNat_summary.csv")
+
+Royal_recent_combined <- Royal_need_finding %>%
+  filter(!is.na(First_voucher_since_1990) | !is.na(First_iNat_since_1990)) %>%
+  select(scientific_name, First_voucher_since_1990, First_iNat_since_1990) %>%
+  pivot_longer(cols = 2:3) %>%
+  filter(!is.na(value)) %>% 
+  mutate(name = ifelse(stringr::str_detect(name,"iNat"), "iNat", "voucher")) %>%
+  arrange(value) %>%
+  distinct(scientific_name, .keep_all = TRUE) %>%
+  rename(year = value, source = name) %>%
+  mutate(counter = 1) %>%
+  select(-scientific_name) %>%
+  group_by(year, source) %>%
+  mutate(
+    counter = sum(counter)
+    ) %>%
+  distinct() %>%
+  ungroup() %>%
+  pivot_wider(names_from = source, values_from = counter)
+
+#write_csv(Royal_recent_combined, "data_Royal/Royal_recent_combined.csv", na = "")
+```
+
+
+### - generate plots
+
+```{r}
+# try https://stackoverflow.com/questions/61775003/ggplot2-create-shaded-area-with-gradient-below-curve to get colors to grade; won't let you use gradients with geom_ribbon
+
+summary_recent_CCH <- read_csv("data_Yosemite/summary_recent_CCH.csv")
+summary_recent_iNat <- read_csv("data_Yosemite/summary_recent_iNat.csv")
+summary_recent_combined <- read_csv("data_Yosemite/summary_recent_combined.csv")
+summary_recent_2lines <- read_csv("data_Yosemite/summary_2_lines.csv")
+
+Royal_recent_vouchers_summary <- read_csv("data_Royal/Royal_recent_vouchers_summary.csv") %>% rename(year = First_voucher_since_1990)
+Royal_recent_iNat_summary <- read_csv("data_Royal/Royal_recent_iNat_summary.csv") %>% rename(year = First_iNat_since_1990)
+Royal_combined <- read_csv("data_Royal/Royal_recent_combined.csv")
+
+combined_plot_a <- ggplot() + 
+  geom_rect(aes(xmin = 1990, xmax = 2025, ymin = 0, ymax = min(Royal_recent_vouchers_summary$remaining)), fill = "#608CB8", colour = NA, alpha = 0.1) + 
+  geom_rect(aes(xmin = 2003, xmax = 2025, ymin = 0, ymax = min(Royal_recent_iNat_summary$remaining)), fill = "#74AC00", colour = NA, alpha = 0.1) + 
+  geom_ribbon(aes(x = year, ymin = min(Royal_recent_vouchers_summary$remaining), ymax = remaining), data = Royal_recent_vouchers_summary, fill = "#608CB8", color = "#608CB8", alpha = 0.35) +
+  geom_ribbon(aes(x = year, ymin = min(Royal_recent_iNat_summary$remaining), ymax = remaining), data = Royal_recent_iNat_summary, fill = "#74AC00", color = "#74AC00", alpha = 0.35) +
+  scale_x_continuous(limits = c(1990, 2025), breaks = c(1990, 2000, 2010, 2020), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0, 1200), breaks = c(200, 400, 600, 800, 1000, 1200), expand = c(0,0)) +
+  geom_text(aes(x = 1996, y = 435, label = "status", fontface = "italic")) +
+  geom_text(aes(x = 1996, y = 365, label = "unknown", fontface = "italic")) +
+  geom_text(aes(x = 2014, y = 300, label = "status unknown", fontface = "italic")) +
+  geom_text(aes(x = 1997, y = 860, label = "vouchers only")) +
+  geom_text(aes(x = 2012, y = 960, label = "iNaturalist only")) +
+  theme_classic()  +
+  labs(
+    title = "Royal"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+combined_plot_b <- ggplot() + 
+    geom_rect(aes(xmin = 1990, xmax = 2025, ymin = 0, ymax = min(Royal_combined$combined_remaining)), fill = "#6EA387", colour = NA, alpha = 0.15) +
+    geom_ribbon(aes(x = year, ymin = min(Royal_combined$combined_remaining), ymax = combined_remaining), data = Royal_combined %>% filter(year < 2020), fill = "#608CB8", alpha = 0.2) +
+    geom_ribbon(aes(x = year, ymin = min(Royal_combined$combined_remaining), ymax = combined_remaining), data = Royal_combined %>% filter(year > 2002), fill = "#74AC00", alpha = 0.2) +
+  geom_line(aes(x = year, y = combined_remaining), data = Royal_combined, color = "#74AC00", size = 1) +
+  geom_line(aes(x = year, y = voucher_remaining), data = Royal_combined, color = "#608CB8", size = 1) +
+  scale_x_continuous(limits = c(1990, 2025), breaks = c(1990, 2000, 2010, 2020), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0, 1200), breaks = c(200, 400, 600, 800, 1000, 1200), expand = c(0,0)) +
+  geom_text(aes(x = 1996, y = 800, label = "combined")) +
+  geom_text(aes(x = 1996, y = 730, label = "resources")) +
+  geom_text(aes(x = 2008, y = 300, label = "status unknown", fontface = "italic")) +
+theme_classic()  +
+  labs(
+    title = " "
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+combined_plot_c <- ggplot() + 
+  geom_rect(aes(xmin = 1990, xmax = 2024, ymin = 0, ymax = min(summary_recent_CCH$remaining)), fill = "#608CB8", colour = NA, alpha = 0.1) + 
+  geom_rect(aes(xmin = 2008, xmax = 2024, ymin = 0, ymax = min(summary_recent_iNat$remaining)), fill = "#74AC00", colour = NA, alpha = 0.1) + 
+  geom_ribbon(aes(x = year, ymin = min(summary_recent_CCH$remaining), ymax = remaining), data = summary_recent_CCH, fill = "#608CB8", color = "#608CB8", alpha = 0.35) +
+  geom_ribbon(aes(x = year, ymin = min(summary_recent_iNat$remaining), ymax = remaining), data = summary_recent_iNat, fill = "#74AC00", color = "#74AC00", alpha = 0.35) +
+  scale_x_continuous(limits = c(1990, 2025), breaks = c(1990, 2000, 2010, 2020), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0, 1600), breaks = c(500, 1000, 1500), expand = c(0,0)) +
+  geom_text(aes(x = 1999, y = 240, label = "status unknown", fontface = "italic")) +
+  geom_text(aes(x = 2016, y = 370, label = "status unknown", fontface = "italic")) +
+  geom_text(aes(x = 1998, y = 850, label = "vouchers only")) +
+  geom_text(aes(x = 2015, y = 850, label = "iNaturalist only")) +
+  #scale_y_log10(limits = c(1, 1800), breaks = c(1, 10, 100, 1000, 1577), expand = c(0,0)) +
+  theme_classic()  +
+  labs(
+    title = "Yosemite"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+combined_plot_d <- ggplot() + 
+    geom_rect(aes(xmin = 1990, xmax = 2024, ymin = 0, ymax = min(summary_recent_2lines$combined_remaining)), fill = "#6EA387", colour = NA, alpha = 0.15) +
+    geom_ribbon(aes(x = year, ymin = min(summary_recent_2lines$combined_remaining), ymax = combined_remaining), data = summary_recent_2lines %>% filter(year < 2013), fill = "#608CB8", alpha = 0.2) +
+    geom_ribbon(aes(x = year, ymin = min(summary_recent_2lines$combined_remaining), ymax = combined_remaining), data = summary_recent_2lines %>% filter(year > 2007), fill = "#74AC00", alpha = 0.2) +
+  #scale_fill_gradient(low = "#608CB8", high = "#74AC00") +
+  geom_line(aes(x = year, y = combined_remaining), data = summary_recent_2lines, color = "#74AC00", size = 1) +
+  geom_line(aes(x = year, y = CCH_remaining), data = summary_recent_2lines, color = "#608CB8", size = 1) +
+  scale_x_continuous(limits = c(1990, 2025), breaks = c(1990, 2000, 2010, 2020), expand = c(0,0)) +
+  scale_y_continuous(limits = c(0, 1600), breaks = c(500, 1000, 1500), expand = c(0,0)) +
+  geom_text(aes(x = 1998, y = 850, label = "combined")) +
+  geom_text(aes(x = 1998, y = 750, label = "resources")) +
+  geom_text(aes(x = 2008, y = 110, label = "status unknown", fontface = "italic")) +
+theme_classic()  +
+  labs(
+    title = " "
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+
+
+decline_in_unobserved <- grid.arrange(
+  combined_plot_a, combined_plot_b, combined_plot_c, combined_plot_d,
+  ncol = 2,
+  left = textGrob("species without recorded observations since 1990", rot = 90, gp = gpar(fontsize = 10)),
+  bottom = textGrob("year", gp = gpar(fontsize = 10))
+)
+
+cowplot::save_plot("outputs/decline_in_unobserved.jpg", decline_in_unobserved, base_width = 8, base_height = 8)
+
+```
+
+## Figure 3/4/S. "Finds per observer" histogram
+
+### - generate Yosemite iNat summary
+
+```{r}
+iNat_discoveries <- Yos_species_list %>%
+  filter(iNat_RG_END == "1", is.na(voucher_END))
+
+iNat_discoverers <- Yos_iNat %>%
+  select(scientific_name, observed_on, user_login) %>%
+  arrange(observed_on) %>%
+  mutate(scientific_name = stringr::word(scientific_name, start = 1, end = 2)) %>%
+  filter(scientific_name %in% iNat_discoveries$accepted_name) %>%
+  group_by(scientific_name) %>%
+  summarise_all(.funs = first) %>%
+  ungroup() %>%
+  group_by(user_login) %>%
+  mutate(counts_per_obs = n()) %>%
+  ungroup() %>% 
+  distinct(user_login, counts_per_obs) %>%
+  mutate(
+    source = "iNat",
+    decade_plus = "1990 - 2024"
+    ) %>%
+  rename(first_observer = user_login)
+```
+
+### - generate Yosemite voucher summary
+
+```{r}
+counts_per_decade <- Yos_species_list %>%
+  select(accepted_name, establishment_means, voucher_END, year_first, first_observer) %>%
+  filter(voucher_END == "1") %>%
+  arrange(year_first) %>%
+  mutate(decade_plus = 
+           case_when(
+             year_first < 1900 ~ "1860-1900",
+             year_first >= 1900 & year_first < 1930 ~ "1900 - 1930",
+             year_first >= 1930 & year_first < 1990 ~ "1930 - 1990",
+             year_first >= 1990  ~ "1990 - 2024"
+             ),
+         source = "voucher") %>%
+  group_by(decade_plus, first_observer, source) %>%
+  summarise(counts_per_obs = n()) %>%
+  distinct(decade_plus, first_observer, counts_per_obs, source) %>%
+  ungroup() %>%
+  filter(!is.na(decade_plus)) %>%
+  bind_rows(iNat_discoverers)
+```
+
+### - generate Royal summary
+
+```{r}
+Royal_observer_summary <- Royal_observers %>%
+  rename(first_observer = first_collector, year_first = year_first_collection) %>%
+  arrange(year_first) %>%
+  mutate(decade_plus = 
+           case_when(
+             year_first < 1900 ~ "1860-1900",
+             year_first >= 1900 & year_first < 1930 ~ "1900 - 1930",
+             year_first >= 1930 & year_first < 1990 ~ "1930 - 1990",
+             year_first >= 1990  ~ "1990 - 2024"
+             )
+         ) %>%
+  group_by(decade_plus, first_observer, source) %>%
+  summarise(counts_per_obs = n()) %>%
+  distinct(decade_plus, first_observer, counts_per_obs, source) %>%
+  ungroup() %>%
+  filter(!is.na(decade_plus))
+```
+
+### - histograms of "finds" by observer
+
+```{r}
+collection_colours <-  c("iNaturalist" = "#74AC00", "voucher" = "#608CB8")
+
+counts_per_decade <- counts_per_decade %>%
+  mutate(source = ifelse(source == "iNat", "iNaturalist", source))
+
+Yos_histograms <- ggplot(data = counts_per_decade, aes(x = counts_per_obs)) +
+  geom_histogram(aes_string(fill = "source")) +
+  facet_wrap(~ decade_plus, ncol = 1) +
+  scale_x_log10() +
+  scale_y_continuous(limits = c(0,40)) +
+  scale_fill_manual(values = collection_colours, name = "data source") +
+  labs(
+    y = "number of observers",
+    #x = "number of first records",
+    title = "Yosemite"
+    ) +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.text.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) 
+
+Royal_histograms <- ggplot(data = Royal_observer_summary, aes(x = counts_per_obs)) +
+  geom_histogram(aes_string(fill = "source")) +
+  facet_wrap(~ decade_plus, ncol = 1) +
+  scale_x_log10() +
+  scale_y_continuous(limits = c(0,40)) +
+  scale_fill_manual(values = collection_colours, name = "data source") +
+  labs(
+    y = "number of observers",
+    title = "Royal"
+    ) +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "none"
+  )
+
+histograms <- grid.arrange(
+  Royal_histograms, Yos_histograms,
+  ncol = 2, 
+  widths = c(1, 1.35),
+  bottom = textGrob("number of first records", gp = gpar(fontsize = 10))
+)
+
+cowplot::save_plot("outputs/observer_histograms.jpg", histograms, base_width = 6, base_height = 9)
+```
