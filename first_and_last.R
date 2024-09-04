@@ -6,8 +6,7 @@ source("funx.R")
 
 yos<-read_csv("data_Yosemite/Yosemite_all_data_2024.08.28.csv") 
 yos_keep <- yos %>%
-   filter(voucher_END == "1" | iNat_RG_END == "1") %>%
-  filter(accepted_name!="Mentha arvensis")
+   filter(voucher_END == "1" | iNat_RG_END == "1") 
 
 library(forcats)
 
@@ -34,7 +33,8 @@ yos_keep_filtered$last_year_all <- ifelse(
 
 yos_keep_filtered %>%
   filter(!is.na(first_year_all)) %>%
-  mutate(accepted_name = fct_reorder(accepted_name, first_year_all))->yos_keep_filtered
+  mutate(accepted_name = fct_reorder(accepted_name, first_year_all)) %>%
+  mutate(yaxis_order=as.numeric(accepted_name))->yos_keep_filtered
 
 
 long_unobserved<-filter(yos_keep_filtered,last_year_all<1990)
@@ -46,16 +46,17 @@ table(a$establishment_means)
 # Create the plot
 library(ggplot2)
 
-yos_plot<-ggplot(yos_keep_filtered, aes(y = accepted_name)) +
+yos_plot<-ggplot(yos_keep_filtered, aes(y = yaxis_order)) +
   geom_segment(aes(x = year_first, xend = year_last, 
-                   yend = accepted_name), col="#608CB8",
+                   yend = yaxis_order), col="#608CB8",
                size = 0.2) +
   geom_segment(aes(x = iNat_year_first, xend = iNat_year_last, 
-                   yend = accepted_name), col = "#74AC00",
+                   yend = yaxis_order), col = "#74AC00",
                size = 0.2) +
   theme_classic() +
   ylab("") +
-  ggtitle("") +
+  ylim(0, 1550) +
+  scale_y_continuous(breaks = seq(0, 1550, by = 20)) + 
   scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
   geom_point(
              aes(x = year_first), col = "lightgrey", size = 0.4) +
@@ -65,7 +66,6 @@ yos_plot<-ggplot(yos_keep_filtered, aes(y = accepted_name)) +
   theme_classic() +
   ylab("") +
   ggtitle("Yosemite") +
-  scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
    theme(axis.text.y = element_blank(),    # Remove y-axis text
         axis.ticks.y = element_blank(),
         panel.grid.major.y = element_blank(),  # Remove major y-axis grid lines
@@ -78,7 +78,7 @@ ggsave("testing.svg",width=8,height=8)
 
 
 library(xlsx)
-roy<-read.xlsx("data_Royal/Royal master species list_version2.xlsx",1)
+roy<-read.xlsx("data_Royal/Royal master species list_version3.xlsx",1)
 table(roy$establishment_means)
 
 
@@ -88,6 +88,7 @@ roy$first_year_all <- ifelse(
   as.numeric(roy$first_iNat),
   as.numeric(roy$first_voucher)
 )
+sum(is.na(roy$first_year_all))
 
 newly_discovered_royal<-filter(roy,first_year_all>=1990)
 table(newly_discovered_royal$establishment_means)
@@ -109,26 +110,29 @@ write_csv(long_unobserved_royal,"long_unobserved_royal.csv")
 
 roy %>%
   filter(!is.na(first_year_all)) %>%
-  mutate(scientific_name = fct_reorder(scientific_name, first_year_all))->roy_keep_filtered
+  mutate(scientific_name = fct_reorder(scientific_name, first_year_all))%>%
+  mutate(yaxis_order=as.numeric(scientific_name))->roy_keep_filtered
 
 
-roy_plot<-ggplot(roy_keep_filtered, aes(y = scientific_name)) +
+
+roy_plot<-ggplot(roy_keep_filtered, aes(y = yaxis_order)) +
   geom_segment(aes(x = first_voucher, xend = last_voucher, 
-                   yend = scientific_name), col="#608CB8",
+                   yend = yaxis_order), col="#608CB8",
                size = 0.2) +
   geom_segment(aes(x = first_iNat, xend = last_iNat, 
-                   yend = scientific_name), col = "#74AC00",
+                   yend = yaxis_order), col = "#74AC00",
                size = 0.2) +
-  scale_x_continuous(breaks = seq(1810, 2010, by = 20)) + 
   geom_point(data=roy_keep_filtered,
-    aes(x = first_year_all,y = scientific_name), col = "lightgrey", size = 0.4) +
+    aes(x = first_year_all,y = yaxis_order), col = "lightgrey", size = 0.4) +
   geom_point(data=roy_keep_filtered,
-             aes(x = last_year_all,y = scientific_name), size = 0.4, col = "black") +
+             aes(x = last_year_all,y = yaxis_order), size = 0.4, col = "black") +
   labs(x = "Year") +
   theme_classic() +
   ylab("") +
   ggtitle("Royal") +
   scale_x_continuous(breaks = seq(1850, 2010, by = 20)) + 
+  scale_y_continuous(breaks = seq(0, 1550, by = 20)) + 
+  ylim(0, 1550) +
   theme(axis.text.y = element_blank(),    # Remove y-axis text
         axis.ticks.y = element_blank(),
         panel.grid.major.y = element_blank(),  # Remove major y-axis grid lines
