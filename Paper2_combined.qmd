@@ -72,21 +72,22 @@ Yos_old_only <- Yos_species_paper_2 %>%
   filter(is.na(recent_voucher) & is.na(iNat_RG_END)) %>%
   mutate(establishment_means = ifelse(establishment_means == "invasive", "introduced", establishment_means))
 
-old_voucher_locations <- CCH2_data %>%
-  filter(current_name %in% Yos_old_only$accepted_name, keep_omit == "keep") %>%
+#old_voucher_locations <- CCH2_data %>%
+#  filter(current_name %in% Yos_old_only$accepted_name, keep_omit == "keep") %>%
   # turning off so that I retain actual final location and will manually fill in locations
   #filter(!is.na(decimalLatitude)) %>%   
-  arrange(-year) %>%
-  group_by(current_name) %>%
-  summarise_all(.funs = first) %>%
-  distinct() %>%
-  ungroup() %>%
-  left_join(Yos_old_only %>% select(current_name = accepted_name, establishment_means))
+#  arrange(-year) %>%
+#  group_by(current_name) %>%
+#  summarise_all(.funs = first) %>%
+#  distinct() %>%
+#  ungroup() %>%
+#  left_join(Yos_old_only %>% select(current_name = accepted_name, establishment_means))
 
 #old_voucher_locations %>% write_csv("data_Yosemite/Yosemite_long_unseen_last_location.csv")
 
-old_voucher_locations <- read_csv("data_Yosemite/Yosemite_long_unseen_last_location.csv") %>%
-  mutate(source = "voucher")
+old_voucher_locations <- read_csv("data_Yosemite/long_unseen_edited_lat_lon.csv") %>%
+  mutate(source = "voucher") %>%
+  left_join(Yos_old_only %>% select(current_name = accepted_name, establishment_means))
 
 Yos_recent_only <- Yos_species_paper_2 %>%
   filter(is.na(old_voucher) & (iNat_RG_END == "1" | recent_voucher == "1"))
@@ -105,12 +106,16 @@ CCH_recent_additions <- CCH2_data %>%
   summarise_all(.funs = first) %>%
   distinct() %>%
   ungroup() %>%
-  select(scientific_name = current_name, observed_on = year, latitude = decimalLatitude , longitude = decimalLongitude) %>%
+  select(scientific_name = current_name, observed_on = year, latitude = decimalLatitude , longitude = decimalLongitude, recordedBy_simple, locality, institutionCode) %>%
   mutate(observed_on = lubridate::make_date(observed_on, 1, 1))
 
 #CCH_recent_additions %>% write_csv("data_Yosemite/Yosemite_CCH_recent_additions.csv")
 
-CCH_recent_additions <- read_csv("data_Yosemite/Yosemite_CCH_recent_additions.csv") %>% mutate(source = "voucher")
+CCH_recent_additions <- read_csv("data_Yosemite/CCH_recent_additions_latlon_fixed.csv") %>% 
+  mutate(
+    source = "voucher", 
+    observed_on = date(observed_on)
+    )
 
 recent_additions_all <- iNat_recent_additions %>%
   bind_rows(CCH_recent_additions) %>%
@@ -135,9 +140,12 @@ Yos_long_unseen <-
   ggplot() + 
   geom_sf(mapping = aes(), data = yosemite_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
   geom_sf(mapping = aes(), data = yos_roads_clipped, stat = "sf") +
-  geom_point(aes(decimalLongitude, decimalLatitude, col = factor(establishment_means)), data = old_voucher_locations, position = "jitter") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means)), data = old_voucher_locations, position = position_jitter(height=.005, width=.005)) +
   scale_colour_manual(values = establish_colours, name = "origin") +
+  #scale_x_continuous(expand = c(0, 0)) +
+  #scale_y_continuous(expand = c(0, 0)) +
   theme_classic() + 
+  annotation_scale(location = "br", width_hint = 0.5, pad_y = unit(0, "cm"), pad_x = unit(0, "cm"),line_width = 0.5, height = unit(0.2, "cm")) +
   ggtitle("b. Yosemite") +
   theme(
     legend.position = "none",
@@ -145,17 +153,20 @@ Yos_long_unseen <-
     axis.text = element_blank(),
     axis.ticks = element_blank(),
     axis.line = element_blank(),
+    axis.ticks.length = unit(0, "pt"),
     plot.title = element_text(hjust = 0, size = 10),
-    plot.margin=unit(c(.03,.0,.0,.1),"cm")
+    plot.margin=unit(c(.0,.0,.0,.0),"cm")
   )
 
 Yos_new_discoveries_tmp <-
   ggplot() + 
   geom_sf(mapping = aes(), data = yosemite_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
   geom_sf(mapping = aes(), data = yos_roads_clipped, stat = "sf") +
-  geom_point(aes(longitude, latitude, col = factor(establishment_means), shape = factor(source)), data = recent_additions_all, position = "jitter") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means), shape = factor(source)), data = recent_additions_all, position = position_jitter(height=.005, width=.005)) +
   scale_colour_manual(values = establish_colours, name = "species origin") +
   scale_shape_manual(values = source_shapes, name = "data source") +
+  #scale_x_continuous(expand = c(0, 0)) +
+  #scale_y_continuous(expand = c(0, 0)) +
   theme_classic() +
   ggtitle("d. Yosemite") +
   theme(
@@ -164,8 +175,9 @@ Yos_new_discoveries_tmp <-
     axis.text = element_blank(),
     axis.ticks = element_blank(),
     axis.line = element_blank(),
+    axis.ticks.length = unit(0, "pt"),
     plot.title = element_text(hjust = 0, size = 10),
-    plot.margin=unit(c(.03,.0,.0,.1),"cm")
+    plot.margin=unit(c(.0,.0,.0,.0),"cm")
   )
 
 legend_maps <- get_legend(Yos_new_discoveries_tmp) #+ theme(legend.margin = margin(2, 2, 2, 2))
@@ -195,12 +207,15 @@ royal_roads <- st_read("data_Royal/Royal_roads.gpx", layer = "tracks") %>%
 
 royal_roads_clipped <- rmapshaper::ms_clip(target = royal_roads, clip = royal_outline[1])
 
+
 Royal_long_unseen <-
   ggplot() + 
   geom_sf(mapping = aes(), data = royal_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
   geom_sf(mapping = aes(), data = royal_roads_clipped, stat = "sf") +
-  geom_point(aes(longitude, latitude, col = factor(establishment_means)), data = Royal_long_unseen_locations, position = "jitter") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means)), data = Royal_long_unseen_locations, position = position_jitter(height=.001, width=.001)) +
   scale_colour_manual(values = establish_colours2, name = "origin") +
+  #scale_x_continuous(expand = c(0, 0)) +
+  #scale_y_continuous(expand = c(0, 0)) +
   theme_classic() + 
   ggtitle("a. Royal") +
   theme(
@@ -209,17 +224,21 @@ Royal_long_unseen <-
     axis.text = element_blank(),
     axis.ticks = element_blank(),
     axis.line = element_blank(),
+    axis.ticks.length = unit(0, "pt"),
     plot.title = element_text(hjust = 0, size = 10),
-    plot.margin=unit(c(.03,.0,.0,.1),"cm")
+    plot.margin=unit(c(.0,.0,.0,.0),"cm")
   )
 
 Royal_new_discoveries <-
   ggplot() + 
   geom_sf(mapping = aes(), data = royal_outline , stat = "sf", fill = "#C5DDC2", color = "grey50") +
   geom_sf(mapping = aes(), data = royal_roads_clipped, stat = "sf") +
-  geom_point(aes(longitude, latitude, col = factor(establishment_means), shape = factor(source)), data = Royal_recent_additions_all, position = "jitter") +
+  geom_point(aes(longitude, latitude, col = factor(establishment_means), shape = factor(source)), data = Royal_recent_additions_all, position = position_jitter(height=.001, width=.001)) +
   scale_colour_manual(values = establish_colours2, name = "species origin") +
   scale_shape_manual(values = source_shapes, name = "data source") +
+  annotation_scale(location = "br", width_hint = 0.5, pad_y = unit(1.4, "cm"), pad_x = unit(.3, "cm"), line_width = 0.5, height = unit(0.2, "cm")) +
+  #scale_x_continuous(expand = c(0, 0)) +
+  #scale_y_continuous(expand = c(0, 0)) +
   theme_classic() +
   ggtitle("c. Royal") +
   theme(
@@ -227,8 +246,9 @@ Royal_new_discoveries <-
     axis.text = element_blank(),
     axis.ticks = element_blank(),
     axis.line = element_blank(),
+    axis.ticks.length = unit(0, "pt"),
     plot.title = element_text(hjust = 0, size = 10),
-    plot.margin=unit(c(.03,.0,.0,.1),"cm"),
+    plot.margin=unit(c(0,0,0,0),"cm"),
     legend.position = "none"
     )
 ```
@@ -638,3 +658,50 @@ histograms <- grid.arrange(
 
 cowplot::save_plot("outputs/observer_histograms.jpg", histograms, base_width = 6, base_height = 9)
 ```
+
+## New observations 2024.02 to 2024.08
+```{r}
+iNat_20240901 <- read_csv("data_Yosemite/iNat_Yos_RG_2024.09.01.csv")
+
+iNat_RG_202402 <- Yos_species_paper_2 %>% 
+  filter(iNat_RG_END == "1")
+
+unseen_to_RG_summer_24 <- iNat_20240901 %>%
+filter(taxon_species_name %in% Yos_species_paper_2$accepted_name) %>%
+filter(!taxon_species_name %in% iNat_RG_202402$accepted_name)  %>%
+  select(user_login, taxon_species_name, observed_on, latitude, longitude) %>%
+  arrange(observed_on) %>%
+  distinct(taxon_species_name, .keep_all = TRUE) %>%
+  arrange(user_login)
+
+iNat_new_finds_summer_24 <- iNat_20240901 %>%
+filter(!taxon_species_name %in% unseen_to_RG_summer_24$taxon_species_name)  %>%
+filter(!taxon_species_name %in% iNat_RG_202402$accepted_name) %>%
+  select(user_login, taxon_species_name, observed_on, updated_at, latitude, longitude) %>%
+  arrange(observed_on) %>%
+  distinct(taxon_species_name, .keep_all = TRUE) %>%
+  arrange(user_login) %>% View()
+```
+
+```{r}
+iNat_needsID_20240901 <- read_csv("data_Yosemite/iNat_Yos_needsID_2024.09.01.csv")
+
+iNat_RG_202402 <- Yos_species_paper_2 %>% 
+  filter(iNat_RG_END == "1")
+
+unseen_as_RG_thru_summer_24 <- iNat_needsID_20240901 %>%
+  arrange(observed_on) %>%
+  distinct(taxon_species_name, .keep_all = TRUE) %>%
+filter(taxon_species_name %in% Yos_species_paper_2$accepted_name) %>%
+filter(!taxon_species_name %in% (Yos_species_paper_2 %>% filter(is.na(recent_voucher)))$accepted_name) %>%
+filter(!taxon_species_name %in% iNat_RG_202402$accepted_name)  %>%
+filter(!taxon_species_name %in% unseen_to_RG_summer_24$taxon_species_name)  %>%
+  select(user_login, taxon_species_name, observed_on, latitude, longitude) %>%
+  arrange(user_login) %>%
+  left_join(Yos_species_paper_2 %>% rename(taxon_species_name = accepted_name) %>% select(taxon_species_name, establishment_means, family, broader))
+
+
+
+```
+
+
