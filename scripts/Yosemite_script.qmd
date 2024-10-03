@@ -18,7 +18,8 @@ source("funx.R")
 
 ## 1. DON'T RUN: Generate a list of all names in vouchers, to edit
 
-archive - no need to run and indeed won't run in this folder! 
+archive - no need to run and indeed won't run in this folder!
+
 ```{r}
 Yosemite_list_before <- read_csv("data_Yosemite/Yosemite_all_data_2024.09.csv")
 
@@ -147,7 +148,7 @@ CCH2_data <- read_csv("data_Yosemite/Yosemite_CCH_records_2024_09_22.csv") %>%
   filter(!is.na(current_name))
 ```
 
-### DON'T RUN: Read in Yosemite shapefile, 
+### DON'T RUN: Read in Yosemite shapefile,
 
 No longer need to run each time
 
@@ -161,7 +162,7 @@ yos_simp <- st_make_valid(yos_sf) %>% st_polygonize
 
 No longer need to run each time
 
-``` {r}
+```{r}
 yos <- read_in_and_filter("data_Yosemite/GBIF_data_0005020-240202131308920.csv", yos_simp)
 
 institutions_in_CCH <- CCH2_data %>% distinct(institutionCode)
@@ -616,9 +617,9 @@ iNat_end_recent_count <- sum(iNat_end_recent$counts)
 iNat_end_recent_prop <- iNat_end_recent_count / total_count_end_recent
 ```
 
-## 8. Pie charts
+## 8a. Pie charts - vouchers
 
-### - voucher outcomes
+### - unique voucher outcomes
 
 ```{r}
 # unique voucher outcomes
@@ -650,7 +651,11 @@ voucher_outcomes_unique <- Yos_data %>%
     ))
     ) %>%
   arrange(voucher_outcome, voucher_outcome_detailed)
+```
 
+### - voucher outcomes detailed
+
+```{r}
 # summarise voucher outcomes
 voucher_outcomes <- Yos_data %>%
   select(outcome = voucher_outcome_detailed, voucher_outcome) %>%
@@ -691,9 +696,9 @@ ggplot(voucher_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-
 ### - voucher outcomes collapsed
-``` {r}
+
+```{r}
  voucher_outcomes_collapsed <- Yos_data %>%
   select(outcome = voucher_outcome, voucher_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
@@ -726,16 +731,14 @@ ggplot(voucher_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - voucher add-on outcomes
-``` {r}
+
+```{r}
 add_ons_vouchers <- Yos_data %>%
-  select(outcome = voucher_outcome) %>%
+  select(outcome = voucher_outcome, voucher_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
-  filter(stringr::str_starts(outcome, "add")) %>%
-  mutate(
-    outcome = case_when(
-      outcome == "add, voucher found during check" ~ "add, voucher found checking other lists",
-      outcome == "add, voucher found in CCH download" ~ "add, voucher found manual download"
-    )) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(stringr::str_starts(voucher_outcome_detailed, "add,")) %>%
+  select(-voucher_outcome_detailed) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%
@@ -759,9 +762,11 @@ ggplot(add_ons_vouchers, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-### - parks list outcomes
+## 8b. Pie charts - parks list
+
+### - unique parks list outcomes
+
 ```{r}
-# list of park list outcomes
 park_outcomes_unique <- Yos_data %>%
   distinct(parks_outcome, parks_outcome_detailed) %>%
   mutate(
@@ -769,6 +774,37 @@ park_outcomes_unique <- Yos_data %>%
     parks_outcome_detailed = factor(parks_outcome_detailed, levels = c(
       "retain exact name", "retain species under synonymous name",
       "retain because vouchers for species are close to the park",
+      "retain, misapplied",
+      "remove, species range far from park",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, taxa lumped using iNaturalist taxonomy",
+      "add, taxonomic splits since last list update",
+      "remove, designated as 'False Report'",
+      "remove, wrong name assigned during databasing",
+      "remove, horticultural record",
+      "add, known vouchers missing from biodiversity portal",
+      "vouchers missed due to undetected synonyms",
+      "XX-synonym", "XX-misapplied",
+      "XX-not on parks list, but occurs in park", 
+      "XX-not on parks list, not in park",
+      "XX-iNat needs ID only", "XX-Symbiotica only"
+    ))
+    ) %>%
+  arrange(parks_outcome, parks_outcome_detailed)
+```
+
+### - parks list outcomes detailed
+
+```{r}
+parklist_outcomes <- Yos_data %>%
+  select(outcome = parks_outcome_detailed, parks_outcome) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    outcome = factor(outcome, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain because vouchers for species are close to the park",
+      "retain, misapplied",
       "remove, species range far from park",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
@@ -777,20 +813,12 @@ park_outcomes_unique <- Yos_data %>%
       "remove, horticultural record",
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
-      "XX-synonym", 
+      "XX-synonym", "XX-misapplied",
       "XX-not on parks list, but occurs in park", 
       "XX-not on parks list, not in park",
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
-    ) %>%
-  arrange(parks_outcome, parks_outcome_detailed)
-
-# summarise parks list outcomes
-parklist_outcomes <- Yos_data %>%
-  select(outcome = parks_outcome) %>%
-  filter(!stringr::str_starts(outcome, "XX")) %>%
-  filter(!stringr::str_starts(outcome, "add")) %>%
-  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics"))) %>%
+        ) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%
@@ -811,29 +839,15 @@ ggplot(parklist_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - parks list outcomes collapsed
+
 ```{r}
 # summarise parks list outcomes
 parklist_outcomes_collapsed <- Yos_data %>%
-  select(outcome = parks_outcome_detailed, parks_outcome) %>%
+  select(outcome = parks_outcome, parks_outcome_detailed) %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
-  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
-    outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
-      "retain because vouchers for species are close to the park",
-      "remove, species range far from park",
-      "remove, misapplied name",
-      "remove, double or triple listing due to synonymy",
-      "add, taxonomic splits since last list update",
-      "remove, designated as 'False Report'",
-      "remove, horticultural record",
-      "add, known vouchers missing from biodiversity portal",
-      "vouchers missed due to undetected synonyms",
-      "XX-synonym", 
-      "XX-not on parks list, but occurs in park", 
-      "XX-not on parks list, not in park",
-      "XX-iNat needs ID only", "XX-Symbiotica only"
-    ))
-        ) %>%
+  filter(!stringr::str_starts(parks_outcome_detailed, "add")) %>%
+  select(-parks_outcome_detailed) %>%
+  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%
@@ -857,41 +871,99 @@ ggplot(parklist_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-# - park list add-on outcomes
+### - park list add-on outcomes
+
 ```{r}
 add_ons_parks <- Yos_data %>%
-  select(outcome = parks_outcome) %>%
+  select(outcome = parks_outcome, parks_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
-  filter(stringr::str_starts(outcome, "add")) %>% nrow()
-```
-
-### - iNaturalist outcomes
-
-```{r}
-# summarise iNaturalist outcomes
-iNat_outcomes <- Yos_data %>%
-  select(outcome = iNat_outcome) %>%
-  filter(stringr::str_starts(outcome, "retain")|stringr::str_starts(outcome, "remove")) %>%
-  mutate(outcome = case_when(
-    outcome == "retain observation" ~ "1. retain",
-    outcome == "retain, new native record" ~ "1. retain",
-    outcome == "retain, new weed record" ~ "1. retain",
-    outcome == "retain, restricted license" ~ "2. retain restricted",
-    outcome == "retain, restricted & new weed record" ~ "2. retain restricted",
-    outcome == "retain, restricted & new native record" ~ "2. retain restricted",
-    outcome == "retain, auto-obscured coordinates" ~ "3. retain auto-obscured",
-    outcome == "retain, manually obscured coordinates" ~ "4. retain manually obscured",
-    outcome == "remove, 01. wrong ID" ~ "5. wrong ID",
-    outcome == "remove, 04. misapplied name" ~ "5. wrong ID",
-    outcome == "remove, 02. wrong coordinates" ~ "6. wrong coordinates",
-    outcome == "remove, 03. horticultural" ~ "7. horticultural record",
-    outcome == "remove, 05. duplicate synonym" ~ "8. duplicate synonym"
-    )
-  ) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(stringr::str_starts(parks_outcome_detailed, "add,")) %>%
+  select(-parks_outcome_detailed) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%
   distinct()
+```
+
+## 8c. Pie charts - iNaturalist
+
+### - unique voucher outcomes
+
+```{r}
+iNat_outcomes_unique <- Yos_data %>%
+  distinct(iNat_outcome, iNat_outcome_detailed) %>%
+  mutate(
+    iNat_outcome = factor(iNat_outcome, levels = c(
+      "retain exact name", "retain, restricted license", 
+      "geographic error", "identification error", 
+      "taxonomic or nomenclatural error", "databasing discrepancy", 
+      "XX-synonym", "XX-not in graphics"
+      )),
+    iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "restricted license"), "retain, but restricted license", iNat_outcome_detailed),
+    iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "exact name"), "retain exact name", iNat_outcome_detailed),
+    iNat_outcome_detailed = factor(iNat_outcome_detailed, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain, but restricted license",
+      "remove, coordinates erroneously inside park",
+      "remove, incorrect identification",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, horticultural record",
+      "add, observations lost due to auto-obscured coordinates",
+      "add, observations lost due manually obscured coordinates",
+      "add, observations lost due to inaccurate protected area polygon",
+      "add, needsID observation that likely correct",
+      "XX-synonym", 
+      "XX-not in iNat, but occurs in park", 
+      "XX-not in iNat, not in park",
+      "XX-iNat needs ID only", "XX-Symbiotica only"
+      ))
+    ) %>%
+  arrange(iNat_outcome, iNat_outcome_detailed) %>%
+  distinct()
+```
+
+### - iNaturalist outcomes detailed
+
+```{r}
+# summarise iNaturalist outcomes
+iNat_outcomes <- Yos_data %>%
+  select(outcome = iNat_outcome_detailed, iNat_outcome) %>%
+  filter(!stringr::str_starts(iNat_outcome, "XX")) %>%
+  mutate(
+      outcome = ifelse(
+        stringr::str_detect(outcome, "restricted license"), 
+        "retain, but restricted license", 
+        outcome),
+    outcome = ifelse(
+      stringr::str_detect(outcome, "exact name"), 
+      "retain exact name", 
+      outcome),
+    iNat_outcome = factor(iNat_outcome, levels = c(
+      "retain exact name", "retain, restricted license", 
+      "geographic error", "identification error", 
+      "taxonomic or nomenclatural error", "databasing discrepancy", 
+      "XX-synonym", "XX-not in graphics"
+      )),
+    outcome = factor(outcome, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain, but restricted license",
+      "remove, coordinates erroneously inside park",
+      "remove, incorrect identification",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, horticultural record",
+      "add, observations lost due to auto-obscured coordinates",
+      "add, observations lost due manually obscured coordinates",
+      "add, observations lost due to inaccurate protected area polygon"
+  ))
+  ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct() %>%
+  arrange(outcome)
 
 iNat_outcomes <- iNat_outcomes %>% 
   mutate(percent = 100*outcome_counts / sum(iNat_outcomes$outcome_counts)) %>%
@@ -906,26 +978,19 @@ ggplot(iNat_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - iNaturalist outcomes collapsed
+
 ```{r}
 # summarise iNaturalist outcomes
 iNat_outcomes_collapsed <- Yos_data %>%
-  select(outcome = iNat_outcome) %>%
-  filter(stringr::str_starts(outcome, "retain")|stringr::str_starts(outcome, "remove")) %>%
-  mutate(outcome = case_when(
-        outcome == "retain observation" ~ "1. retain",
-    outcome == "retain, new native record" ~ "1. retain",
-    outcome == "retain, new weed record" ~ "1. retain",
-    outcome == "retain, restricted license" ~ "2. retain restricted",
-    outcome == "retain, restricted & new weed record" ~ "2. retain restricted",
-    outcome == "retain, restricted & new native record" ~ "2. retain restricted",
-    outcome == "retain, auto-obscured coordinates" ~ "1. retain",
-    outcome == "retain, manually obscured coordinates" ~ "1. retain",
-    outcome == "remove, 01. wrong ID" ~ "4. identification errors",
-    outcome == "remove, 04. misapplied name" ~ "4. identification errors",
-    outcome == "remove, 02. wrong coordinates" ~ "3. geographic errors",
-    outcome == "remove, 03. horticultural" ~ "7. databasing discrepancies",
-    outcome == "remove, 05. duplicate synonym" ~ "6. taxonomic and nomenclature errors"
-    )
+  select(outcome = iNat_outcome, iNat_outcome_detailed) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(!stringr::str_starts(iNat_outcome_detailed, "add")) %>%
+  select(-iNat_outcome_detailed) %>%
+  mutate(outcome = factor(outcome, levels = c(
+      "retain exact name", "retain, restricted license", 
+      "geographic error", "identification error", 
+      "taxonomic or nomenclatural error", "databasing discrepancy"
+      )),
   ) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
@@ -948,18 +1013,15 @@ ggplot(iNat_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-## - iNaturalist add-on outcomes
+### - iNaturalist add-on outcomes
+
 ```{r}
 add_ons_iNat <- Yos_data %>%
-  select(outcome = iNat_outcome) %>%
+  select(outcome = iNat_outcome, iNat_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
-  filter(stringr::str_starts(outcome, "add")) %>%
-  mutate(
-    outcome = case_when(
-    outcome == "add, auto-obscured coordinates" ~ "1. auto-obscured coordinates",
-    outcome == "add, manually obscured coordinates" ~ "2. manually obscured coordinates",
-    outcome == "add, needsID likely correct" ~ "3. needsID",
-    )) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(stringr::str_starts(iNat_outcome_detailed, "add,")) %>%
+  select(-iNat_outcome_detailed) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%

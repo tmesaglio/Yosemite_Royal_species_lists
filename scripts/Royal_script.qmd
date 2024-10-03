@@ -12,7 +12,7 @@ editor_options:
 library(tidyverse)
 library(eulerr)
 
-Royal_data <- read_csv("data_Royal/Supplementary Table 2_2024_09_23.csv")
+Royal_data <- read_csv("data_Royal/Royal_Supplementary_Table.csv")
 ```
 
 ## 7 Euler diagrams
@@ -265,9 +265,440 @@ invasive_fit$original %>% sum() + native_fit$original %>% sum()
 end_old_fit$original %>% sum() + end_old_recent_fit$original %>% sum() + end_recent_fit$original %>% sum()
 ```
 
+## 8a. Pie charts - vouchers
+
+### - unique voucher outcomes
+
+```{r}
+# unique voucher outcomes
+voucher_outcomes_unique <- Royal_data %>%
+  distinct(voucher_outcome, voucher_outcome_detailed) %>%
+  mutate(
+    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain misapplied name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-misapplied", "XX-not in graphics")),
+    voucher_outcome_detailed = factor(voucher_outcome_detailed, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain misapplied name",
+      "remove, coordinates erroneously inside park",
+      "add, coordinates erroneously outside park or missing coordinates",
+      "remove, incorrect identification",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, taxa lumped using iNaturalist taxonomy",
+      "remove, untraced taxonomic error",
+      "add, vouchers missed due to undetected synonyms",
+      "remove, horticultural record",
+      "remove, wrong name assigned during databasing",
+      "add, known vouchers missing from biodiversity portal",
+      "vouchers missed due to undetected synonyms",
+      "XX-synonym", "XX-misapplied",
+      "XX-no voucher, but occurs in park", 
+      "XX-no voucher, not in park", 
+      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected due to 'incorrect identification'; not in park",
+      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected due to 'untraced taxonomic error'; not in park",
+      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected because 'horticultural record'; not in park",
+      "XX-vouchers missed due to 'undetected synonyms' found, but rejected due to 'untraced taxonomic error'", 
+      "XX-iNat needs ID only", "XX-Symbiotica only"
+    ))
+    ) %>%
+  arrange(voucher_outcome, voucher_outcome_detailed)
+```
+
+### - voucher outcomes detailed
+
+```{r}
+# summarise voucher outcomes
+voucher_outcomes <- Royal_data %>%
+  select(outcome = voucher_outcome_detailed, voucher_outcome) %>%
+  filter(!is.na(outcome)) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(!stringr::str_starts(outcome, "add")) %>%
+  mutate(
+    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    outcome = factor(outcome, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "remove, coordinates erroneously inside park",
+      "add, coordinates erroneously outside park or missing coordinates",
+      "remove, incorrect identification",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, untraced taxonomic error",
+      "remove, taxa lumped when using iNaturalist taxonomy",
+      "add, vouchers missed due to undetected synonyms",
+      "remove, horticultural record",
+      "add, known vouchers missing from biodiversity portal",
+      "vouchers missed due to undetected synonyms"))) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct(voucher_outcome, outcome, .keep_all = TRUE) %>%
+  select(voucher_outcome, outcome, outcome_counts)  %>%
+  arrange(outcome)
+
+voucher_outcomes <- voucher_outcomes %>%
+  mutate(percent = 100*outcome_counts / sum(voucher_outcomes$outcome_counts)) %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(voucher_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - voucher outcomes collapsed
+
+```{r}
+ voucher_outcomes_collapsed <- Royal_data %>%
+  select(outcome = voucher_outcome, voucher_outcome_detailed) %>%
+  filter(!is.na(outcome)) %>%
+  filter(!stringr::str_starts(outcome, "XX") & !stringr::str_starts(voucher_outcome_detailed, "add")) %>%
+  select(-voucher_outcome_detailed) %>%
+  mutate(
+    outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))
+  ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct(outcome, .keep_all = TRUE) %>%
+  arrange(outcome)
+
+# double check numbers
+start_fit[2] %>% as.data.frame() %>% rownames_to_column() %>% filter(str_detect(rowname, "voucher")) %>% select(original.values) %>% sum()
+voucher_outcomes_collapsed %>% select(outcome_counts) %>% sum()
+
+voucher_outcomes_collapsed <- voucher_outcomes_collapsed %>%
+  mutate(percent = 100*outcome_counts / sum(voucher_outcomes_collapsed$outcome_counts)) %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(voucher_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+
+```
+
+### - voucher add-on outcomes
+
+```{r}
+add_ons_vouchers <- Royal_data %>%
+  select(outcome = voucher_outcome, voucher_outcome_detailed) %>%
+  filter(!is.na(outcome)) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(stringr::str_starts(voucher_outcome_detailed, "add,")) %>%
+  select(-voucher_outcome_detailed) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+rest_of_circle_vouchers <- sum(voucher_outcomes$outcome_counts) - sum(add_ons_vouchers$outcome_counts)
+
+total_retained_vouchers <- 
+  tibble(
+    outcome = "rest", 
+    outcome_counts = rest_of_circle_vouchers)
+
+add_ons_vouchers <- add_ons_vouchers %>%
+  bind_rows(total_retained_vouchers)
+
+# create add-on wedge via pie chart
+ggplot(add_ons_vouchers, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+## 8b. Pie charts - parks list
+
+### - unique parks list outcomes
+
+```{r}
+park_outcomes_unique <- Royal_data %>%
+  distinct(parks_outcome, parks_outcome_detailed) %>%
+  mutate(
+    parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    parks_outcome_detailed = factor(parks_outcome_detailed, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain because vouchers for species are close to the park",
+      "retain, misapplied",
+      "remove, species range far from park",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, taxa lumped using iNaturalist taxonomy",
+      "add, taxonomic splits since last list update",
+      "remove, designated as 'False Report'",
+      "remove, wrong name assigned during databasing",
+      "remove, horticultural record",
+      "add, known vouchers missing from biodiversity portal",
+      "vouchers missed due to undetected synonyms",
+      "XX-synonym", "XX-misapplied",
+      "XX-not on parks list, but occurs in park", 
+      "XX-not on parks list, not in park",
+      "XX-iNat needs ID only", "XX-Symbiotica only"
+    ))
+    ) %>%
+  arrange(parks_outcome, parks_outcome_detailed)
+```
+
+### - parks list outcomes detailed
+
+```{r}
+parklist_outcomes <- Royal_data %>%
+  select(outcome = parks_outcome_detailed, parks_outcome) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    outcome = factor(outcome, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain because vouchers for species are close to the park",
+      "retain, misapplied",
+      "remove, species range far from park",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "add, taxonomic splits since last list update",
+      "remove, designated as 'False Report'",
+      "remove, horticultural record",
+      "add, known vouchers missing from biodiversity portal",
+      "vouchers missed due to undetected synonyms",
+      "XX-synonym", "XX-misapplied",
+      "XX-not on parks list, but occurs in park", 
+      "XX-not on parks list, not in park",
+      "XX-iNat needs ID only", "XX-Symbiotica only"
+    ))
+        ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct() %>%
+  arrange(outcome)
+
+parklist_outcomes <- parklist_outcomes %>%
+  mutate(percent = (100*outcome_counts) / sum(parklist_outcomes$outcome_counts)) %>%
+  distinct() %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(parklist_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + scale_fill_brewer(palette="Blues")+
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - parks list outcomes collapsed
+
+```{r}
+# summarise parks list outcomes
+parklist_outcomes_collapsed <- Royal_data %>%
+  select(outcome = parks_outcome, parks_outcome_detailed) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(!stringr::str_starts(parks_outcome_detailed, "add")) %>%
+  select(-parks_outcome_detailed) %>%
+  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct() %>%
+  arrange(outcome)
+
+parklist_outcomes_collapsed <- parklist_outcomes_collapsed %>%
+  mutate(percent = (100*outcome_counts) / sum(parklist_outcomes_collapsed$outcome_counts)) %>%
+  distinct() %>%
+  arrange(outcome)
+
+# double check numbers
+start_fit[2] %>% as.data.frame() %>% rownames_to_column() %>% filter(str_detect(rowname, "park")) %>% select(original.values) %>% sum()
+parklist_outcomes_collapsed %>% select(outcome_counts) %>% sum()
+
+# retain vs remove pie chart
+ggplot(parklist_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + scale_fill_brewer(palette="Blues")+
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - park list add-on outcomes
+
+```{r}
+add_ons_parks <- Royal_data %>%
+  select(outcome = parks_outcome, parks_outcome_detailed) %>%
+  filter(!is.na(outcome)) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(stringr::str_starts(parks_outcome_detailed, "add,")) %>%
+  select(-parks_outcome_detailed) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+```
+
+## 8c. Pie charts - iNaturalist
+
+### - unique voucher outcomes
+
+```{r}
+iNat_outcomes_unique <- Royal_data %>%
+  distinct(iNat_outcome, iNat_outcome_detailed) %>%
+  mutate(
+    iNat_outcome = factor(iNat_outcome, levels = c(
+      "retain exact name", "retain, restricted license", 
+      "geographic error", "identification error", 
+      "taxonomic or nomenclatural error", "databasing discrepancy", 
+      "XX-synonym", "XX-not in graphics"
+      )),
+    iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "restricted license"), "retain, but restricted license", iNat_outcome_detailed),
+    iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "exact name"), "retain exact name", iNat_outcome_detailed),
+    iNat_outcome_detailed = factor(iNat_outcome_detailed, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain, but restricted license",
+      "remove, coordinates erroneously inside park",
+      "remove, incorrect identification",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, horticultural record",
+      "add, observations lost due to auto-obscured coordinates",
+      "add, observations lost due manually obscured coordinates",
+      "add, observations lost due to inaccurate protected area polygon",
+      "add, needsID observation that likely correct",
+      "XX-synonym", 
+      "XX-not in iNat, but occurs in park", 
+      "XX-not in iNat, not in park",
+      "XX-iNat needs ID only", "XX-Symbiotica only"
+      ))
+    ) %>%
+  arrange(iNat_outcome, iNat_outcome_detailed) %>%
+  distinct()
+```
+
+### - iNaturalist outcomes detailed
+
+```{r}
+# summarise iNaturalist outcomes
+iNat_outcomes <- Royal_data %>%
+  select(outcome = iNat_outcome_detailed, iNat_outcome) %>%
+  filter(!stringr::str_starts(iNat_outcome, "XX")) %>%
+  mutate(
+      outcome = ifelse(
+        stringr::str_detect(outcome, "restricted license"), 
+        "retain, but restricted license", 
+        outcome),
+    outcome = ifelse(
+      stringr::str_detect(outcome, "exact name"), 
+      "retain exact name", 
+      outcome),
+    iNat_outcome = factor(iNat_outcome, levels = c(
+      "retain exact name", "retain, restricted license", 
+      "geographic error", "identification error", 
+      "taxonomic or nomenclatural error", "databasing discrepancy", 
+      "XX-synonym", "XX-not in graphics"
+      )),
+    outcome = factor(outcome, levels = c(
+      "retain exact name", "retain species under synonymous name",
+      "retain, but restricted license",
+      "remove, coordinates erroneously inside park",
+      "remove, incorrect identification",
+      "remove, misapplied name",
+      "remove, double or triple listing due to synonymy",
+      "remove, horticultural record",
+      "add, observations lost due to auto-obscured coordinates",
+      "add, observations lost due manually obscured coordinates",
+      "add, observations lost due to inaccurate protected area polygon"
+  ))
+  ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct() %>%
+  arrange(outcome)
+
+iNat_outcomes <- iNat_outcomes %>% 
+  mutate(percent = 100*outcome_counts / sum(iNat_outcomes$outcome_counts)) %>%
+  arrange(outcome)
+
+# retain vs remove pie chart
+ggplot(iNat_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + #scale_fill_brewer(palette="Blues")+
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - iNaturalist outcomes collapsed
+
+```{r}
+# summarise iNaturalist outcomes
+iNat_outcomes_collapsed <- Royal_data %>%
+  select(outcome = iNat_outcome, iNat_outcome_detailed) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(!stringr::str_starts(iNat_outcome_detailed, "add")) %>%
+  select(-iNat_outcome_detailed) %>%
+  mutate(outcome = factor(outcome, levels = c(
+      "retain exact name", "retain, restricted license", 
+      "geographic error", "identification error", 
+      "taxonomic or nomenclatural error", "databasing discrepancy"
+      )),
+  ) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+iNat_outcomes_collapsed <- iNat_outcomes_collapsed %>% 
+  mutate(percent = 100*outcome_counts / sum(iNat_outcomes_collapsed$outcome_counts)) %>%
+  arrange(outcome)
+
+# double check numbers
+start_fit[2] %>% as.data.frame() %>% rownames_to_column() %>% filter(str_detect(rowname, "iNat")) %>% select(original.values) %>% sum()
+iNat_outcomes_collapsed %>% select(outcome_counts) %>% sum()
+
+# retain vs remove pie chart
+ggplot(iNat_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + #scale_fill_brewer(palette="Blues")+
+  theme_minimal() +
+  theme(axis.text.x=element_blank())  
+```
+
+### - iNaturalist add-on outcomes
+
+```{r}
+add_ons_iNat <- Royal_data %>%
+  select(outcome = iNat_outcome, iNat_outcome_detailed) %>%
+  filter(!is.na(outcome)) %>%
+  filter(!stringr::str_starts(outcome, "XX")) %>%
+  filter(stringr::str_starts(iNat_outcome_detailed, "add,")) %>%
+  select(-iNat_outcome_detailed) %>%
+  group_by(outcome) %>%
+  mutate(outcome_counts = n()) %>%
+  ungroup() %>%
+  distinct()
+
+rest_of_circle_iNat <- sum(iNat_outcomes$outcome_counts) - sum(add_ons_iNat$outcome_counts)
+
+total_retained_iNat <- 
+  tibble(
+    outcome = "rest", 
+    outcome_counts = rest_of_circle_iNat)
+
+add_ons_iNat <- add_ons_iNat %>%
+  bind_rows(total_retained_iNat)
+
+# create add-on wedge via pie chart
+ggplot(add_ons_iNat, aes(x="", y=outcome_counts, fill=outcome))+
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  theme_minimal() +
+  theme(axis.text.x=element_blank())   
+```
+
 ## 8. Pie charts
 
 ### - voucher outcomes
+
 ```{r}
 voucher_outcomes <- Royal_data %>%
   select(outcome = voucher_outcome) %>%
@@ -305,9 +736,9 @@ ggplot(voucher_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-
 ### - voucher outcomes collapsed
-``` {r}
+
+```{r}
 voucher_outcomes_collapsed <- Royal_data %>%
   select(outcome = voucher_outcome) %>%
   filter(!is.na(outcome)) %>%
@@ -348,7 +779,8 @@ ggplot(voucher_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - voucher summarise add-on outcomes
-``` {r}
+
+```{r}
 add_ons_vouchers <- Royal_data %>%
   select(outcome = voucher_outcome) %>%
   filter(!is.na(outcome)) %>%
@@ -381,6 +813,7 @@ ggplot(add_ons_vouchers, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - parks list outcomes
+
 ```{r}
 parklist_outcomes <- Royal_data %>%
   select(outcome = parks_outcome) %>%
@@ -416,6 +849,7 @@ ggplot(parklist_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - parks list outcomes collapsed
+
 ```{r}
 parklist_outcomes_collapsed <- Royal_data %>%
   select(outcome = parks_outcome) %>%
@@ -456,8 +890,8 @@ ggplot(parklist_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-
 ### - iNaturalist outcomes
+
 ```{r}
 iNat_outcomes <- Royal_data %>%
   select(outcome = iNat_outcome) %>%
@@ -489,6 +923,7 @@ ggplot(iNat_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ### - iNaturalist outcomes collapsed
+
 ```{r}
 iNat_outcomes_collapsed <- Royal_data %>%
   select(outcome = iNat_outcome) %>%
@@ -524,7 +959,8 @@ ggplot(iNat_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
 ```
 
 ## - iNat summarise add-on outcomes
-``` {r}
+
+```{r}
 add_ons_iNat <- Royal_data %>%
   select(outcome = iNat_outcome) %>%
   filter(!is.na(outcome)) %>%
