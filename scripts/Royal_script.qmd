@@ -12,7 +12,7 @@ editor_options:
 library(tidyverse)
 library(eulerr)
 
-Royal_data <- read_csv("data_Royal/Royal_Supplementary_Table.csv")
+Royal_data <- read_csv("data_Royal/Royal_Supplementary Table.csv")
 ```
 
 ## 7 Euler diagrams
@@ -49,6 +49,10 @@ iNat_start <- start_fit$original.values %>% data.frame() %>% rownames_to_column(
 
 iNat_start_count <- sum(iNat_start$counts)
 iNat_start_prop <- iNat_start_count / total_count_start
+
+park_start <- start_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "park"))
+
+park_start_count <- sum(park_start$counts)
 ```
 
 ### - ending data
@@ -72,9 +76,16 @@ plot(end_fit, quantities = FALSE, labels = FALSE)
 plot(end_fit, quantities = TRUE, labels = TRUE)
 
 total_count_end <- end_fit$original.values %>% sum()
+
+voucher_end <- end_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "voucher"))
+voucher_end_count <- sum(voucher_end$counts)
+
 iNat_end <- end_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "iNat"))
 iNat_end_count <- sum(iNat_end$counts)
 iNat_end_prop <- iNat_end_count / total_count_end
+
+park_end <- end_fit$original.values %>% data.frame() %>% rownames_to_column() %>% rename(counts = 2, category = 1) %>% filter(stringr::str_detect(category, "park"))
+park_end_count <- sum(park_end$counts)
 ```
 
 ### - ending data - showy
@@ -197,7 +208,7 @@ data_for_end_old <- old_vouchers %>% select(vouchers = voucher_end, parklist = p
 
 end_old_fit <- euler(data_for_end_old)
 plot(end_old_fit, quantities = TRUE, labels = FALSE)
-plot(end_old_fit, quantities = TRUE, labels = FALSE)
+plot(end_old_fit, quantities = TRUE, labels = TRUE)
 
 
 total_count_end_old <- end_old_fit$original.values %>% sum()
@@ -274,12 +285,11 @@ end_old_fit$original %>% sum() + end_old_recent_fit$original %>% sum() + end_rec
 voucher_outcomes_unique <- Royal_data %>%
   distinct(voucher_outcome, voucher_outcome_detailed) %>%
   mutate(
-    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain misapplied name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-misapplied", "XX-not in graphics")),
+    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-misapplied", "XX-not in graphics")),
     voucher_outcome_detailed = factor(voucher_outcome_detailed, levels = c(
-      "retain exact name", "retain species under synonymous name",
-      "retain misapplied name",
-      "remove, coordinates erroneously inside park",
-      "add, coordinates erroneously outside park or missing coordinates",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
+      "remove, coordinates erroneously inside protected area",
+      "add, coordinates erroneously outside protected area or missing coordinates",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
@@ -291,11 +301,11 @@ voucher_outcomes_unique <- Royal_data %>%
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
       "XX-synonym", "XX-misapplied",
-      "XX-no voucher, but occurs in park", 
-      "XX-no voucher, not in park", 
-      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected due to 'incorrect identification'; not in park",
-      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected due to 'untraced taxonomic error'; not in park",
-      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected because 'horticultural record'; not in park",
+      "XX-no voucher, but occurs in protected area", 
+      "XX-no voucher, not in protected area", 
+      "XX-voucher with 'coordinates erroneously outside protected area or missing coordinates' found, but rejected due to 'incorrect identification'; not in protected area",
+      "XX-voucher with 'coordinates erroneously outside protected area or missing coordinates' found, but rejected due to 'untraced taxonomic error'; not in protected area",
+      "XX-voucher with 'coordinates erroneously outside protected area or missing coordinates' found, but rejected because 'horticultural record'; not in protected area",
       "XX-vouchers missed due to 'undetected synonyms' found, but rejected due to 'untraced taxonomic error'", 
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
@@ -311,20 +321,21 @@ voucher_outcomes <- Royal_data %>%
   select(outcome = voucher_outcome_detailed, voucher_outcome) %>%
   filter(!is.na(outcome)) %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
-  filter(!stringr::str_starts(outcome, "add")) %>%
+  #filter(!stringr::str_starts(outcome, "add")) %>%
   mutate(
-    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+      voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-misapplied", "XX-not in graphics")),
     outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
-      "remove, coordinates erroneously inside park",
-      "add, coordinates erroneously outside park or missing coordinates",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
+      "remove, coordinates erroneously inside protected area",
+      "add, coordinates erroneously outside protected area or missing coordinates",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
+      "remove, taxa lumped using iNaturalist taxonomy",
       "remove, untraced taxonomic error",
-      "remove, taxa lumped when using iNaturalist taxonomy",
       "add, vouchers missed due to undetected synonyms",
       "remove, horticultural record",
+      "remove, wrong name assigned during databasing",
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms"))) %>%
   group_by(outcome) %>%
@@ -355,7 +366,9 @@ ggplot(voucher_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
   filter(!stringr::str_starts(outcome, "XX") & !stringr::str_starts(voucher_outcome_detailed, "add")) %>%
   select(-voucher_outcome_detailed) %>%
   mutate(
-    outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))
+    outcome = factor(outcome, levels = c(
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
+      "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))
   ) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
@@ -420,9 +433,9 @@ ggplot(add_ons_vouchers, aes(x="", y=outcome_counts, fill=outcome))+
 park_outcomes_unique <- Royal_data %>%
   distinct(parks_outcome, parks_outcome_detailed) %>%
   mutate(
-    parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-misapplied", "XX-not in graphics")),
     parks_outcome_detailed = factor(parks_outcome_detailed, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain because vouchers for species are close to the park",
       "retain, misapplied",
       "remove, species range far from park",
@@ -436,8 +449,8 @@ park_outcomes_unique <- Royal_data %>%
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
       "XX-synonym", "XX-misapplied",
-      "XX-not on parks list, but occurs in park", 
-      "XX-not on parks list, not in park",
+      "XX-not on parks list, but occurs in protected area", 
+      "XX-not on parks list, not in protected area",
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
     ) %>%
@@ -450,22 +463,24 @@ park_outcomes_unique <- Royal_data %>%
 parklist_outcomes <- Royal_data %>%
   select(outcome = parks_outcome_detailed, parks_outcome) %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
-  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
     outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", 
+      "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain because vouchers for species are close to the park",
-      "retain, misapplied",
       "remove, species range far from park",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
+      "remove, taxa lumped using iNaturalist taxonomy",
       "add, taxonomic splits since last list update",
       "remove, designated as 'False Report'",
+      "remove, wrong name assigned during databasing",
       "remove, horticultural record",
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
       "XX-synonym", "XX-misapplied",
-      "XX-not on parks list, but occurs in park", 
-      "XX-not on parks list, not in park",
+      "XX-not on parks list, but occurs in protected area", 
+      "XX-not on parks list, not in protected area",
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
         ) %>%
@@ -497,7 +512,7 @@ parklist_outcomes_collapsed <- Royal_data %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
   filter(!stringr::str_starts(parks_outcome_detailed, "add")) %>%
   select(-parks_outcome_detailed) %>%
-  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))) %>%
+  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%
@@ -548,14 +563,14 @@ iNat_outcomes_unique <- Royal_data %>%
       "retain exact name", "retain, restricted license", 
       "geographic error", "identification error", 
       "taxonomic or nomenclatural error", "databasing discrepancy", 
-      "XX-synonym", "XX-not in graphics"
+      "XX-synonym", "XX-misapplied", "XX-not in graphics"
       )),
     iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "restricted license"), "retain, but restricted license", iNat_outcome_detailed),
     iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "exact name"), "retain exact name", iNat_outcome_detailed),
     iNat_outcome_detailed = factor(iNat_outcome_detailed, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain, but restricted license",
-      "remove, coordinates erroneously inside park",
+      "remove, coordinates erroneously inside protected area",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
@@ -563,10 +578,11 @@ iNat_outcomes_unique <- Royal_data %>%
       "add, observations lost due to auto-obscured coordinates",
       "add, observations lost due manually obscured coordinates",
       "add, observations lost due to inaccurate protected area polygon",
+      "add, needsID observation that is definitely correct",
       "add, needsID observation that likely correct",
-      "XX-synonym", 
-      "XX-not in iNat, but occurs in park", 
-      "XX-not in iNat, not in park",
+      "XX-synonym", "XX-misapplied", 
+      "XX-not in iNat, but occurs in protected area", 
+      "XX-not in iNat, not in protected area",
       "XX-iNat needs ID only", "XX-Symbiotica only"
       ))
     ) %>%
@@ -594,12 +610,12 @@ iNat_outcomes <- Royal_data %>%
       "retain exact name", "retain, restricted license", 
       "geographic error", "identification error", 
       "taxonomic or nomenclatural error", "databasing discrepancy", 
-      "XX-synonym", "XX-not in graphics"
+      "XX-synonym", "XX-misapplied", "XX-not in graphics"
       )),
     outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain, but restricted license",
-      "remove, coordinates erroneously inside park",
+      "remove, coordinates erroneously inside protected area",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
@@ -958,7 +974,7 @@ ggplot(iNat_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())  
 ```
 
-## - iNat summarise add-on outcomes
+### - iNat summarise add-on outcomes
 
 ```{r}
 add_ons_iNat <- Royal_data %>%
@@ -993,4 +1009,30 @@ ggplot(add_ons_iNat, aes(x="", y=outcome_counts, fill=outcome))+
   coord_polar("y", start=0) +
   theme_minimal() +
   theme(axis.text.x=element_blank())   
+```
+
+## 9.  Extra statistics
+
+```{r}
+iNat_only <- Royal_data %>% 
+  filter(iNat_RG_END == 1 & is.na(voucher_END) & is.na(in_park_END)) %>%
+  select(accepted_name, family, establishment_means, broader) %>%
+  distinct() %>%
+  mutate(group = "iNaturalist only")
+
+voucher_only <- Royal_data %>% 
+  filter(is.na(iNat_RG_END) & voucher_END == 1 & is.na(in_park_END)) %>%
+  select(accepted_name, family, establishment_means, broader) %>%
+  distinct() %>%
+  mutate(group = "voucher only")
+
+parklist_only <- Royal_data %>% 
+  filter(is.na(iNat_RG_END) == 1 & is.na(voucher_END) & in_park_END == 1) %>%
+  select(accepted_name, family, establishment_means, broader) %>%
+  distinct() %>%
+  mutate(group = "protected area list only")
+
+species_list <- voucher_only %>%
+  bind_rows(parklist_only, iNat_only) %>%
+  write_csv("data_Royal/Royal_unique_species.csv")
 ```

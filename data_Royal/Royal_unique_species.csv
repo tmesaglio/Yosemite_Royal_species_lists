@@ -1,0 +1,337 @@
+accepted_name,family,establishment_means,broader,group
+Adiantum raddianum,Pteridaceae,introduced,1.ferns/primitive,voucher only
+Gomphrena celosioides,Amaranthaceae,introduced,3.dicot,voucher only
+Centella cordifolia,Apiaceae,native,3.dicot,voucher only
+Arrhenechthites mixtus,Asteraceae,native,3.dicot,voucher only
+Coronidium gunnianum,Asteraceae,native,3.dicot,voucher only
+Gamochaeta americana,Asteraceae,introduced,3.dicot,voucher only
+Plecostachys serpyllifolia,Asteraceae,introduced,3.dicot,voucher only
+Podolepis jaceoides,Asteraceae,native,3.dicot,voucher only
+Tanacetum vulgare,Asteraceae,introduced,3.dicot,voucher only
+Hackelia latifolia,Boraginaceae,native,3.dicot,voucher only
+Lobelia simplicicaulis,Campanulaceae,native,3.dicot,voucher only
+Wahlenbergia stricta,Campanulaceae,native,3.dicot,voucher only
+Spergularia rubra,Caryophyllaceae,introduced,3.dicot,voucher only
+Celastrus subspicatus,Celastraceae,native,3.dicot,voucher only
+Stackhousia monogyna,Celastraceae,native,3.dicot,voucher only
+Crassula decumbens,Crassulaceae,native,3.dicot,voucher only
+Crassula peduncularis,Crassulaceae,native,3.dicot,voucher only
+Hibbertia bracteata,Dilleniaceae,native,3.dicot,voucher only
+Drosera hookeri,Droseraceae,native,3.dicot,voucher only
+Tetratheca ericifolia,Elaeocarpaceae,native,3.dicot,voucher only
+Styphelia laeta,Ericaceae,native,3.dicot,voucher only
+Acacia elata,Fabaceae,native,3.dicot,voucher only
+Acacia schinoides,Fabaceae,native,3.dicot,voucher only
+Bossiaea prostrata,Fabaceae,native,3.dicot,voucher only
+Dillwynia trichopoda,Fabaceae,native,3.dicot,voucher only
+Jacksonia scoparia,Fabaceae,native,3.dicot,voucher only
+Medicago lupulina,Fabaceae,introduced,3.dicot,voucher only
+Medicago polymorpha,Fabaceae,introduced,3.dicot,voucher only
+Platylobium parviflorum,Fabaceae,native,3.dicot,voucher only
+Pultenaea ferruginea,Fabaceae,native,3.dicot,voucher only
+Tephrosia grandiflora,Fabaceae,introduced,3.dicot,voucher only
+Trifolium campestre,Fabaceae,introduced,3.dicot,voucher only
+Geranium potentilloides,Geraniaceae,native,3.dicot,voucher only
+Coopernookia barbata,Goodeniaceae,native,3.dicot,voucher only
+Mentha × piperita,Lamiaceae,introduced,3.dicot,voucher only
+Prostanthera lasianthos,Lamiaceae,native,3.dicot,voucher only
+Cassytha melantha,Lauraceae,native,3.dicot,voucher only
+Cassytha paniculata,Lauraceae,native,3.dicot,voucher only
+Hibiscus richardsonii,Malvaceae,native,3.dicot,voucher only
+Lasiopetalum parviflorum,Malvaceae,native,3.dicot,voucher only
+Backhousia leptopetala,Myrtaceae,native,3.dicot,voucher only
+Eucalyptus apiculata,Myrtaceae,native,3.dicot,voucher only
+Eucalyptus eugenioides,Myrtaceae,native,3.dicot,voucher only
+Eucalyptus robusta,Myrtaceae,native,3.dicot,voucher only
+Melaleuca linearifolia,Myrtaceae,native,3.dicot,voucher only
+Plantago coronopus,Plantaginaceae,introduced,3.dicot,voucher only
+Plantago varia,Plantaginaceae,native,3.dicot,voucher only
+Grevillea banksii,Proteaceae,introduced,3.dicot,voucher only
+Grevillea capitellata,Proteaceae,native,3.dicot,voucher only
+Ranunculus muricatus,Ranunculaceae,introduced,3.dicot,voucher only
+Populus alba,Salicaceae,introduced,3.dicot,voucher only
+Cestrum nocturnum,Solanaceae,introduced,3.dicot,voucher only
+Melicytus dentatus,Violaceae,native,3.dicot,voucher only
+Hedychium gardnerianum,Zingiberaceae,introduced,3.dicot,voucher only
+Lepidosperma flexuosum,Cyperaceae,native,4.monocot,voucher only
+Lepidosperma latens,Cyperaceae,native,4.monocot,voucher only
+Lepidosperma prospectum,Cyperaceae,native,4.monocot,voucher only
+Lepidosperma sieberi,Cyperaceae,native,4.monocot,voucher only
+Schoenus nitens,Cyperaceae,native,4.monocot,voucher only
+Juncus imbricatus,Juncaceae,introduced,4.monocot,voucher only
+Austrostipa rudis,Poaceae,native,4.monocot,voucher only
+Bothriochloa decipiens,Poaceae,native,4.monocot,voucher only
+Calamagrostis angustifolia,Poaceae,native,4.monocot,voucher only
+Entolasia whiteana,Poaceae,native,4.monocot,voucher only
+Eragrostis cilianensis,Poaceae,introduced,4.monocot,voucher only
+Eragrostis tenuifolia,Poaceae,introduced,4.monocot,voucher only
+Eragrostis trachycarpa,Poaceae,native,4.monocot,voucher only
+Poa tenera,Poaceae,native,4.monocot,voucher only
+Polypogon monspeliensis,Poaceae,introduced,4.monocot,voucher only
+Vallisneria nana,Hydrocharitaceae,native,5.monocot-colorful,voucher only
+Pterostylis alveata,Orchidaceae,native,5.monocot-colorful,voucher only
+Pterostylis obtusa,Orchidaceae,native,5.monocot-colorful,voucher only
+Blechnum camfieldii,Blechnaceae,native,1.ferns/primitive,protected area list only
+Blechnum minus,Blechnaceae,native,1.ferns/primitive,protected area list only
+Tmesipteris truncata,Psilotaceae,native,1.ferns/primitive,protected area list only
+Arthropteris beckleri,Tectariaceae,native,1.ferns/primitive,protected area list only
+Cyclosorus interruptus,Thelypteridaceae,native,1.ferns/primitive,protected area list only
+Pinus radiata,Pinaceae,introduced,2.gymnosperm,protected area list only
+Carpobrotus aequilaterus,Aizoaceae,introduced,3.dicot,protected area list only
+Atriplex prostrata,Amaranthaceae,introduced,3.dicot,protected area list only
+Chenopodium nutans,Amaranthaceae,native,3.dicot,protected area list only
+Chenopodium robertianum,Amaranthaceae,native,3.dicot,protected area list only
+Dysphania ambrosioides,Amaranthaceae,introduced,3.dicot,protected area list only
+Daucus glochidiatus,Apiaceae,native,3.dicot,protected area list only
+Foeniculum vulgare,Apiaceae,introduced,3.dicot,protected area list only
+Cephalaralia cephalobotrys,Araliaceae,native,3.dicot,protected area list only
+Hydrocotyle laxiflora,Araliaceae,native,3.dicot,protected area list only
+Hydrocotyle sibthorpioides,Araliaceae,native,3.dicot,protected area list only
+Arctotheca calendula,Asteraceae,introduced,3.dicot,protected area list only
+Bidens pilosa,Asteraceae,introduced,3.dicot,protected area list only
+Centipeda minima,Asteraceae,native,3.dicot,protected area list only
+Cichorium intybus,Asteraceae,introduced,3.dicot,protected area list only
+Coreopsis lanceolata,Asteraceae,introduced,3.dicot,protected area list only
+Cotula australis,Asteraceae,native,3.dicot,protected area list only
+Cotula coronopifolia,Asteraceae,introduced,3.dicot,protected area list only
+Delairea odorata,Asteraceae,introduced,3.dicot,protected area list only
+Erigeron bonariensis,Asteraceae,introduced,3.dicot,protected area list only
+Erigeron canadensis,Asteraceae,introduced,3.dicot,protected area list only
+Euchiton japonicus,Asteraceae,native,3.dicot,protected area list only
+Facelis retusa,Asteraceae,introduced,3.dicot,protected area list only
+Gamochaeta coarctata,Asteraceae,introduced,3.dicot,protected area list only
+Gamochaeta purpurea,Asteraceae,introduced,3.dicot,protected area list only
+Hypochaeris glabra,Asteraceae,introduced,3.dicot,protected area list only
+Hypochaeris radicata,Asteraceae,introduced,3.dicot,protected area list only
+Olearia tomentosa,Asteraceae,native,3.dicot,protected area list only
+Olearia viscidula,Asteraceae,native,3.dicot,protected area list only
+Osteospermum moniliferum,Asteraceae,introduced,3.dicot,protected area list only
+Sonchus oleraceus,Asteraceae,introduced,3.dicot,protected area list only
+Symphyotrichum subulatum,Asteraceae,introduced,3.dicot,protected area list only
+Taraxacum officinale,Asteraceae,introduced,3.dicot,protected area list only
+Vittadinia triloba,Asteraceae,native,3.dicot,protected area list only
+Cakile edentula,Brassicaceae,introduced,3.dicot,protected area list only
+Lepidium bonariense,Brassicaceae,introduced,3.dicot,protected area list only
+Opuntia stricta,Cactaceae,introduced,3.dicot,protected area list only
+Isotoma fluviatilis,Campanulaceae,native,3.dicot,protected area list only
+Lobelia concolor,Campanulaceae,native,3.dicot,protected area list only
+Arenaria leptoclados,Caryophyllaceae,introduced,3.dicot,protected area list only
+Cerastium glomeratum,Caryophyllaceae,introduced,3.dicot,protected area list only
+Paronychia brasiliana,Caryophyllaceae,introduced,3.dicot,protected area list only
+Spergula arvensis,Caryophyllaceae,introduced,3.dicot,protected area list only
+Stellaria media,Caryophyllaceae,introduced,3.dicot,protected area list only
+Allocasuarina paludosa,Casuarinaceae,native,3.dicot,protected area list only
+Denhamia silvestris,Celastraceae,native,3.dicot,protected area list only
+Stackhousia nuda,Celastraceae,native,3.dicot,protected area list only
+Calystegia marginata,Convolvulaceae,native,3.dicot,protected area list only
+Convolvulus arvensis,Convolvulaceae,native,3.dicot,protected area list only
+Ipomoea purpurea,Convolvulaceae,introduced,3.dicot,protected area list only
+Cucumis myriocarpus,Cucurbitaceae,introduced,3.dicot,protected area list only
+Hibbertia acicularis,Dilleniaceae,native,3.dicot,protected area list only
+Hibbertia pedunculata,Dilleniaceae,native,3.dicot,protected area list only
+Hibbertia riparia,Dilleniaceae,native,3.dicot,protected area list only
+Diospyros pentamera,Ebenaceae,native,3.dicot,protected area list only
+Daboecia cantabrica,Ericaceae,introduced,3.dicot,protected area list only
+Epacris crassifolia,Ericaceae,native,3.dicot,protected area list only
+Styphelia exolasia,Ericaceae,native,3.dicot,protected area list only
+Baloghia inophylla,Euphorbiaceae,native,3.dicot,protected area list only
+Pseudanthus orientalis,Euphorbiaceae,native,3.dicot,protected area list only
+Ricinus communis,Euphorbiaceae,introduced,3.dicot,protected area list only
+Acacia implexa,Fabaceae,native,3.dicot,protected area list only
+Acacia saligna,Fabaceae,introduced,3.dicot,protected area list only
+Daviesia acicularis,Fabaceae,native,3.dicot,protected area list only
+Desmodium rhytidophyllum,Fabaceae,native,3.dicot,protected area list only
+Desmodium varians,Fabaceae,native,3.dicot,protected area list only
+Dipogon lignosus,Fabaceae,introduced,3.dicot,protected area list only
+Erythrina × sykesii,Fabaceae,introduced,3.dicot,protected area list only
+Genista monspessulana,Fabaceae,introduced,3.dicot,protected area list only
+Glycine microphylla,Fabaceae,native,3.dicot,protected area list only
+Glycine tabacina,Fabaceae,native,3.dicot,protected area list only
+Gompholobium minus,Fabaceae,native,3.dicot,protected area list only
+Lotus angustissimus,Fabaceae,introduced,3.dicot,protected area list only
+Oxytes brachypoda,Fabaceae,native,3.dicot,protected area list only
+Paraserianthes lophantha,Fabaceae,introduced,3.dicot,protected area list only
+Pultenaea aristata,Fabaceae,native,3.dicot,protected area list only
+Pultenaea scabra,Fabaceae,native,3.dicot,protected area list only
+Swainsona reticulata,Fabaceae,native,3.dicot,protected area list only
+Trifolium dubium,Fabaceae,introduced,3.dicot,protected area list only
+Trifolium repens,Fabaceae,introduced,3.dicot,protected area list only
+Zornia dyctiocarpa,Fabaceae,native,3.dicot,protected area list only
+Centaurium erythraea,Gentianaceae,introduced,3.dicot,protected area list only
+Geranium homeanum,Geraniaceae,native,3.dicot,protected area list only
+Goodenia radicans,Goodeniaceae,native,3.dicot,protected area list only
+Prostanthera ovalifolia,Lamiaceae,native,3.dicot,protected area list only
+Prostanthera scutellarioides,Lamiaceae,native,3.dicot,protected area list only
+Cinnamomum camphora,Lauraceae,introduced,3.dicot,protected area list only
+Neolitsea dealbata,Lauraceae,native,3.dicot,protected area list only
+Mitrasacme pilosa,Loganiaceae,native,3.dicot,protected area list only
+Lythrum hyssopifolia,Lythraceae,native,3.dicot,protected area list only
+Pavonia hastata,Malvaceae,introduced,3.dicot,protected area list only
+Melia azedarach,Meliaceae,native,3.dicot,protected area list only
+Liparophyllum exaltatum,Menyanthaceae,native,3.dicot,protected area list only
+Ficus obliqua,Moraceae,native,3.dicot,protected area list only
+Maclura cochinchinensis,Moraceae,native,3.dicot,protected area list only
+Angophora bakeri,Myrtaceae,native,3.dicot,protected area list only
+Melaleuca ericifolia,Myrtaceae,native,3.dicot,protected area list only
+Melaleuca salicina,Myrtaceae,native,3.dicot,protected area list only
+Melaleuca subulata,Myrtaceae,native,3.dicot,protected area list only
+Tristaniopsis collina,Myrtaceae,native,3.dicot,protected area list only
+Nymphaea mexicana,Nymphaeaceae,introduced,3.dicot,protected area list only
+Ligustrum lucidum,Oleaceae,introduced,3.dicot,protected area list only
+Notelaea ovata,Oleaceae,native,3.dicot,protected area list only
+Ludwigia peruviana,Onagraceae,introduced,3.dicot,protected area list only
+Oxalis exilis,Oxalidaceae,native,3.dicot,protected area list only
+Quintinia sieberi,Paracryphiaceae,native,3.dicot,protected area list only
+Passiflora cinnabarina,Passifloraceae,native,3.dicot,protected area list only
+Peperomia tetraphylla,Piperaceae,native,3.dicot,protected area list only
+Callitriche muelleri,Plantaginaceae,native,3.dicot,protected area list only
+Plantago lanceolata,Plantaginaceae,introduced,3.dicot,protected area list only
+Plantago major,Plantaginaceae,introduced,3.dicot,protected area list only
+Veronica calycina,Plantaginaceae,native,3.dicot,protected area list only
+Comesperma retusum,Polygalaceae,native,3.dicot,protected area list only
+Rumex brownii,Polygonaceae,native,3.dicot,protected area list only
+Rumex crispus,Polygonaceae,introduced,3.dicot,protected area list only
+Persoonia mollis,Proteaceae,native,3.dicot,protected area list only
+Cotoneaster glaucophyllus,Rosaceae,introduced,3.dicot,protected area list only
+Coprosma quadrifida,Rubiaceae,native,3.dicot,protected area list only
+Coprosma repens,Rubiaceae,introduced,3.dicot,protected area list only
+Galium binifolium,Rubiaceae,native,3.dicot,protected area list only
+Galium gaudichaudii,Rubiaceae,native,3.dicot,protected area list only
+Galium leiocarpum,Rubiaceae,native,3.dicot,protected area list only
+Galium propinquum,Rubiaceae,native,3.dicot,protected area list only
+Correa alba,Rutaceae,native,3.dicot,protected area list only
+Exocarpos strictus,Santalaceae,native,3.dicot,protected area list only
+Korthalsella rubra,Santalaceae,native,3.dicot,protected area list only
+Dodonaea viscosa,Sapindaceae,native,3.dicot,protected area list only
+Myoporum boninense,Scrophulariaceae,native,3.dicot,protected area list only
+Cestrum aurantiacum,Solanaceae,native,3.dicot,protected area list only
+Lycium ferocissimum,Solanaceae,introduced,3.dicot,protected area list only
+Solanum americanum,Solanaceae,introduced,3.dicot,protected area list only
+Solanum aviculare,Solanaceae,native,3.dicot,protected area list only
+Solanum betaceum,Solanaceae,introduced,3.dicot,protected area list only
+Solanum nigrum,Solanaceae,native,3.dicot,protected area list only
+Solanum pseudocapsicum,Solanaceae,introduced,3.dicot,protected area list only
+Verbena brasiliensis,Verbenaceae,introduced,3.dicot,protected area list only
+Apocissus sterculiifolia,Vitaceae,native,3.dicot,protected area list only
+Carex fascicularis,Cyperaceae,native,4.monocot,protected area list only
+Carex inversa,Cyperaceae,native,4.monocot,protected area list only
+Cyperus laevigatus,Cyperaceae,native,4.monocot,protected area list only
+Schoenus imberbis,Cyperaceae,native,4.monocot,protected area list only
+Juncus articulatus,Juncaceae,introduced,4.monocot,protected area list only
+Juncus kraussii,Juncaceae,native,4.monocot,protected area list only
+Aira caryophyllea,Poaceae,introduced,4.monocot,protected area list only
+Aira praecox,Poaceae,introduced,4.monocot,protected area list only
+Anthosachne scabra,Poaceae,native,4.monocot,protected area list only
+Anthoxanthum odoratum,Poaceae,introduced,4.monocot,protected area list only
+Aristida ramosa,Poaceae,native,4.monocot,protected area list only
+Aristida warburgii,Poaceae,native,4.monocot,protected area list only
+Arundo donax,Poaceae,introduced,4.monocot,protected area list only
+Briza minor,Poaceae,introduced,4.monocot,protected area list only
+Bromus catharticus,Poaceae,introduced,4.monocot,protected area list only
+Bromus diandrus,Poaceae,introduced,4.monocot,protected area list only
+Bromus molliformis,Poaceae,introduced,4.monocot,protected area list only
+Calamagrostis decipiens,Poaceae,native,4.monocot,protected area list only
+Cenchrus macrourus,Poaceae,introduced,4.monocot,protected area list only
+Chascolytrum subaristatum,Poaceae,introduced,4.monocot,protected area list only
+Chloris gayana,Poaceae,introduced,4.monocot,protected area list only
+Cymbopogon refractus,Poaceae,native,4.monocot,protected area list only
+Dichelachne micrantha,Poaceae,native,4.monocot,protected area list only
+Dichelachne rara,Poaceae,native,4.monocot,protected area list only
+Digitaria sanguinalis,Poaceae,native,4.monocot,protected area list only
+Ehrharta erecta,Poaceae,introduced,4.monocot,protected area list only
+Eleusine indica,Poaceae,introduced,4.monocot,protected area list only
+Eragrostis benthamii,Poaceae,native,4.monocot,protected area list only
+Isachne globosa,Poaceae,native,4.monocot,protected area list only
+Lachnagrostis billardierei,Poaceae,native,4.monocot,protected area list only
+Melinis repens,Poaceae,introduced,4.monocot,protected area list only
+Parapholis incurva,Poaceae,introduced,4.monocot,protected area list only
+Paspalum distichum,Poaceae,native,4.monocot,protected area list only
+Paspalum orbiculare,Poaceae,native,4.monocot,protected area list only
+Paspalum urvillei,Poaceae,introduced,4.monocot,protected area list only
+Poa annua,Poaceae,introduced,4.monocot,protected area list only
+Tetrarrhena turfosa,Poaceae,native,4.monocot,protected area list only
+Zoysia macrantha,Poaceae,native,4.monocot,protected area list only
+Crinum pedunculatum,Amaryllidaceae,native,5.monocot-colorful,protected area list only
+Archontophoenix cunninghamiana,Arecaceae,native,5.monocot-colorful,protected area list only
+Canna indica,Cannaceae,introduced,5.monocot-colorful,protected area list only
+Halophila australis,Hydrocharitaceae,native,5.monocot-colorful,protected area list only
+Freesia alba × leichtlinii,Iridaceae,native,5.monocot-colorful,protected area list only
+Adenochilus nortonii,Orchidaceae,native,5.monocot-colorful,protected area list only
+Caladenia curtisepala,Orchidaceae,native,5.monocot-colorful,protected area list only
+Caladenia testacea,Orchidaceae,native,5.monocot-colorful,protected area list only
+Cyanicula caerulea,Orchidaceae,native,5.monocot-colorful,protected area list only
+Dendrobium aemulum,Orchidaceae,native,5.monocot-colorful,protected area list only
+Dendrobium pugioniforme,Orchidaceae,native,5.monocot-colorful,protected area list only
+Diuris sulphurea,Orchidaceae,native,5.monocot-colorful,protected area list only
+Genoplesium rufum,Orchidaceae,native,5.monocot-colorful,protected area list only
+Prasophyllum australe,Orchidaceae,native,5.monocot-colorful,protected area list only
+Pterostylis baptistii,Orchidaceae,native,5.monocot-colorful,protected area list only
+Pterostylis mutica,Orchidaceae,native,5.monocot-colorful,protected area list only
+Pterostylis reflexa,Orchidaceae,native,5.monocot-colorful,protected area list only
+Rimacola elliptica,Orchidaceae,native,5.monocot-colorful,protected area list only
+Thelymitra malvina,Orchidaceae,native,5.monocot-colorful,protected area list only
+Thelymitra media,Orchidaceae,native,5.monocot-colorful,protected area list only
+Thelymitra pauciflora,Orchidaceae,native,5.monocot-colorful,protected area list only
+Nephrolepis cordifolia,Nephrolepidaceae,introduced,1.ferns/primitive,iNaturalist only
+Platycerium superbum,Polypodiaceae,introduced,1.ferns/primitive,iNaturalist only
+Pteris vittata,Pteridaceae,native,1.ferns/primitive,iNaturalist only
+Selaginella kraussiana,Selaginellaceae,introduced,1.ferns/primitive,iNaturalist only
+Araucaria cunninghamii,Araucariaceae,introduced,2.gymnosperm,iNaturalist only
+Asclepias curassavica,Apocynaceae,introduced,3.dicot,iNaturalist only
+Gomphocarpus physocarpus,Apocynaceae,introduced,3.dicot,iNaturalist only
+Nerium oleander,Apocynaceae,introduced,3.dicot,iNaturalist only
+Vinca major,Apocynaceae,introduced,3.dicot,iNaturalist only
+Bartlettina sordida,Asteraceae,introduced,3.dicot,iNaturalist only
+Bidens alba,Asteraceae,introduced,3.dicot,iNaturalist only
+Brachyscome graminea,Asteraceae,native,3.dicot,iNaturalist only
+Erigeron karvinskianus,Asteraceae,introduced,3.dicot,iNaturalist only
+Euryops chrysanthemoides,Asteraceae,introduced,3.dicot,iNaturalist only
+Begonia cucullata,Begoniaceae,introduced,3.dicot,iNaturalist only
+Nandina domestica,Berberidaceae,introduced,3.dicot,iNaturalist only
+Campsis × tagliabueana,Bignoniaceae,introduced,3.dicot,iNaturalist only
+Heliotropium amplexicaule,Boraginaceae,introduced,3.dicot,iNaturalist only
+Crassula multicava,Crassulaceae,introduced,3.dicot,iNaturalist only
+Kalanchoe × houghtonii,Crassulaceae,introduced,3.dicot,iNaturalist only
+Hibbertia stricta,Dilleniaceae,native,3.dicot,iNaturalist only
+Acacia mearnsii,Fabaceae,native,3.dicot,iNaturalist only
+Centaurium tenuiflorum,Gentianaceae,introduced,3.dicot,iNaturalist only
+Pelargonium capitatum,Geraniaceae,introduced,3.dicot,iNaturalist only
+Leonotis leonurus,Lamiaceae,introduced,3.dicot,iNaturalist only
+Modiola caroliniana,Malvaceae,introduced,3.dicot,iNaturalist only
+Pleroma urvilleanum,Melastomataceae,introduced,3.dicot,iNaturalist only
+Ensete ventricosum,Musaceae,introduced,3.dicot,iNaturalist only
+Melaleuca styphelioides,Myrtaceae,native,3.dicot,iNaturalist only
+Nymphaea alba,Nymphaeaceae,introduced,3.dicot,iNaturalist only
+Olea europaea,Oleaceae,introduced,3.dicot,iNaturalist only
+Oxalis debilis,Oxalidaceae,introduced,3.dicot,iNaturalist only
+Oxalis incarnata,Oxalidaceae,introduced,3.dicot,iNaturalist only
+Billardiera mutabilis,Pittosporaceae,native,3.dicot,iNaturalist only
+Veronica anagallis-aquatica,Plantaginaceae,introduced,3.dicot,iNaturalist only
+Comesperma sphaerocarpum,Polygalaceae,native,3.dicot,iNaturalist only
+Pyracantha angustifolia,Rosaceae,introduced,3.dicot,iNaturalist only
+Richardia humistrata,Rubiaceae,introduced,3.dicot,iNaturalist only
+Philotheca hispidula,Rutaceae,native,3.dicot,iNaturalist only
+Solanum lycopersicum,Solanaceae,introduced,3.dicot,iNaturalist only
+Solanum sisymbriifolium,Solanaceae,introduced,3.dicot,iNaturalist only
+Parietaria judaica,Urticaceae,introduced,3.dicot,iNaturalist only
+Lantana montevidensis,Verbenaceae,introduced,3.dicot,iNaturalist only
+Holcus lanatus,Poaceae,introduced,4.monocot,iNaturalist only
+Sagittaria platyphylla,Alismataceae,introduced,5.monocot-colorful,iNaturalist only
+Alstroemeria psittacina,Alstroemeriaceae,introduced,5.monocot-colorful,iNaturalist only
+Leucojum aestivum,Amaryllidaceae,introduced,5.monocot-colorful,iNaturalist only
+Nothoscordum gracile,Amaryllidaceae,introduced,5.monocot-colorful,iNaturalist only
+Sprekelia formosissima,Amaryllidaceae,introduced,5.monocot-colorful,iNaturalist only
+Alocasia brisbanensis,Araceae,native,5.monocot-colorful,iNaturalist only
+Arum italicum,Araceae,introduced,5.monocot-colorful,iNaturalist only
+Dianella congesta,Asphodelaceae,native,5.monocot-colorful,iNaturalist only
+Kniphofia uvaria,Asphodelaceae,introduced,5.monocot-colorful,iNaturalist only
+Trachyandra divaricata,Asphodelaceae,introduced,5.monocot-colorful,iNaturalist only
+Aristea ecklonii,Iridaceae,introduced,5.monocot-colorful,iNaturalist only
+Dietes grandiflora,Iridaceae,introduced,5.monocot-colorful,iNaturalist only
+Gladiolus × hortulanus,Iridaceae,introduced,5.monocot-colorful,iNaturalist only
+Herbertia lahue,Iridaceae,introduced,5.monocot-colorful,iNaturalist only
+Caladenia transitoria,Orchidaceae,native,5.monocot-colorful,iNaturalist only
+Calochilus gracillimus,Orchidaceae,native,5.monocot-colorful,iNaturalist only
+Pterostylis hispidula,Orchidaceae,native,5.monocot-colorful,iNaturalist only
+Thelymitra atronitida,Orchidaceae,native,5.monocot-colorful,iNaturalist only
+Thelymitra improcera,Orchidaceae,native,5.monocot-colorful,iNaturalist only
