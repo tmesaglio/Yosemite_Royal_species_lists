@@ -284,21 +284,51 @@ all_maps <- grid.arrange(
 cowplot::save_plot("outputs/maps.jpg", all_maps, base_width = 8, base_height = 9)
 ```
 
-
-
 ## Figure 2. Decline in "unobserved" over time
 
-### - generate data summaries - Yosemite
+### - function to calculate declining long-unseens
+```{r}
+summarise_long_unseens <-function(data, detection_column, total_species) {
 
+    detection_data_summary <- data %>%
+      select(detection_column) %>%
+      group_by(detection_column) %>%
+      mutate(re_finds_per_year = n()) %>%
+      distinct(re_finds_per_year) %>%
+      ungroup() %>%
+      bind_rows(c("detection_column" = 1989, "re_finds_per_year" = 0)) %>%
+      arrange(detection_column) %>%
+      mutate(total_refound = re_finds_per_year,
+             total_refound = accumulate(re_finds_per_year[-1], sum, .init = total_refound[1]),
+             remaining = total_species - total_refound,
+             proportion_remaining = remaining / total_species,
+             detection_column = detection_column + 1
+             ) %>%
+      rename(year = detection_column)
+    
+    if (max(detection_data_summary$year) < 2024) {
+    detection_data_summary <- detection_data_summary %>%
+      bind_rows(c("year" = 2024, 
+                  "re_finds_per_year" = 0, 
+                  "total_refound" = max(detection_data_summary$total_refound), 
+                  "remaining" = min(detection_data_summary$remaining),
+                  "proportion_remaining" = min(detection_data_summary$proportion_remaining)
+      ))
+    }
+  detection_data_summary
+}
+```
+
+### - generate data summaries - Yosemite
 ```{r}
 
 paper2_fig2 <-
   Yos_species_paper_2 %>%
-  select(accepted_name, establishment_means, voucher_END, iNat_RG_END, old_voucher, recent_voucher) %>%
+  select(accepted_name, family, broader, establishment_means, voucher_END, iNat_RG_END, old_voucher, recent_voucher) %>%
   distinct()
 
 # vouchers
-recent_obs_CCH <- CCH2_data %>%
+recent_obs_CCH <- voucher_data %>%
   filter(keep_omit == "keep", year > 1989) %>%
   filter(current_name %in% paper2_fig2$accepted_name) %>%
   select(accepted_name = current_name, year) %>%
@@ -306,19 +336,40 @@ recent_obs_CCH <- CCH2_data %>%
   arrange(year) %>%
   distinct(accepted_name, .keep_all = TRUE)
 
-summary_recent_CCH <- recent_obs_CCH %>%
-  group_by(year) %>%
-  mutate(re_finds_per_year = n()) %>%
-  distinct(re_finds_per_year) %>%
-  ungroup()
+total_species <- 1570
 
-#write_csv(summary_recent_CCH, "data_Yosemite/summary_recent_CCH.csv")
+  voucher_detection_summary <- recent_obs_CCH %>%
+    select(year) %>%
+    group_by(year) %>%
+    mutate(re_finds_per_year = n()) %>%
+    distinct(re_finds_per_year) %>%
+    ungroup() %>%
+    bind_rows(c("year" = 1989, "re_finds_per_year" = 0)) %>%
+    arrange(year) %>%
+    mutate(total_refound = re_finds_per_year,
+           total_refound = accumulate(re_finds_per_year[-1], sum, .init = total_refound[1]),
+           remaining = total_species - total_refound,
+           proportion_remaining = remaining / total_species,
+           year = year + 1
+           ) %>%
+    rename(year = year)
+  
+  if (max(voucher_detection_summary$year) < 2024) {
+  voucher_detection_summary <- voucher_detection_summary %>%
+    bind_rows(c("year" = 2024, 
+                "re_finds_per_year" = 0, 
+                "total_refound" = max(voucher_detection_summary$total_refound), 
+                "remaining" = min(voucher_detection_summary$remaining),
+                "proportion_remaining" = min(voucher_detection_summary$proportion_remaining)
+    ))
+  }
+
 
 # iNaturalist
 recent_obs_iNat <- Yos_iNat %>%
   select(scientific_name, observed_on) %>%
   mutate(year = year(observed_on)) %>%
-  filter(year > 2007) %>%
+  filter(year > 1989) %>%
   filter(scientific_name %in% Yos_species_paper_2$accepted_name) %>%
   select(accepted_name = scientific_name, year) %>%
   mutate(dataset = "iNat") %>%
@@ -326,13 +377,31 @@ recent_obs_iNat <- Yos_iNat %>%
   distinct(accepted_name, .keep_all = TRUE)
 # have confirmed there were no species with pre-2008 observations that haven't been seen since - so filtering changes when species were "ticked off" the iNat list, but not whether they are ticked off the list, at least for Yosemite
 
-summary_recent_iNat <- recent_obs_iNat %>%
-  group_by(year) %>%
-  mutate(re_finds_per_year = n()) %>%
-  distinct(re_finds_per_year) %>%
-  ungroup() 
-
-#write_csv(summary_recent_iNat, "data_Yosemite/summary_recent_iNat.csv")
+  iNat_detection_summary <- recent_obs_iNat %>%
+    select(year) %>%
+    group_by(year) %>%
+    mutate(re_finds_per_year = n()) %>%
+    distinct(re_finds_per_year) %>%
+    ungroup() %>%
+    bind_rows(c("year" = 1989, "re_finds_per_year" = 0)) %>%
+    arrange(year) %>%
+    mutate(total_refound = re_finds_per_year,
+           total_refound = accumulate(re_finds_per_year[-1], sum, .init = total_refound[1]),
+           remaining = total_species - total_refound,
+           proportion_remaining = remaining / total_species,
+           year = year + 1
+           ) %>%
+    rename(year = year)
+  
+  if (max(iNat_detection_summary$year) < 2024) {
+  iNat_detection_summary <- iNat_detection_summary %>%
+    bind_rows(c("year" = 2024, 
+                "re_finds_per_year" = 0, 
+                "total_refound" = max(iNat_detection_summary$total_refound), 
+                "remaining" = min(iNat_detection_summary$remaining),
+                "proportion_remaining" = min(iNat_detection_summary$proportion_remaining)
+    ))
+  }
 
 # combined voucher & iNat
 
@@ -424,7 +493,6 @@ Royal_recent_combined <- Royal_need_finding %>%
 #write_csv(Royal_recent_combined, "data_Royal/Royal_recent_combined.csv", na = "")
 ```
 
-
 ### - generate plots
 
 ```{r}
@@ -481,10 +549,10 @@ theme_classic()  +
   )
 
 combined_plot_c <- ggplot() + 
-  geom_rect(aes(xmin = 1990, xmax = 2024, ymin = 0, ymax = min(summary_recent_CCH$remaining)), fill = "#608CB8", colour = NA, alpha = 0.1) + 
-  geom_rect(aes(xmin = 2008, xmax = 2024, ymin = 0, ymax = min(summary_recent_iNat$remaining)), fill = "#74AC00", colour = NA, alpha = 0.1) + 
-  geom_ribbon(aes(x = year, ymin = min(summary_recent_CCH$remaining), ymax = remaining), data = summary_recent_CCH, fill = "#608CB8", color = "#608CB8", alpha = 0.35) +
-  geom_ribbon(aes(x = year, ymin = min(summary_recent_iNat$remaining), ymax = remaining), data = summary_recent_iNat, fill = "#74AC00", color = "#74AC00", alpha = 0.35) +
+  geom_rect(aes(xmin = 1990, xmax = 2024, ymin = 0, ymax = min(voucher_detection_summary$remaining)), fill = "#608CB8", colour = NA, alpha = 0.1) + 
+  geom_rect(aes(xmin = 2008, xmax = 2024, ymin = 0, ymax = min(iNat_detection_summary$remaining)), fill = "#74AC00", colour = NA, alpha = 0.1) + 
+  geom_ribbon(aes(x = year, ymin = min(voucher_detection_summary$remaining), ymax = remaining), data = voucher_detection_summary, fill = "#608CB8", color = "#608CB8", alpha = 0.35) +
+  geom_ribbon(aes(x = year, ymin = min(iNat_detection_summary$remaining), ymax = remaining), data = iNat_detection_summary, fill = "#74AC00", color = "#74AC00", alpha = 0.35) +
   scale_x_continuous(limits = c(1990, 2025), breaks = c(1990, 2000, 2010, 2020), expand = c(0,0)) +
   scale_y_continuous(limits = c(0, 1600), breaks = c(500, 1000, 1500), expand = c(0,0)) +
   geom_text(aes(x = 1999, y = 240, label = "status unknown", fontface = "italic")) +
@@ -660,6 +728,7 @@ cowplot::save_plot("outputs/observer_histograms.jpg", histograms, base_width = 6
 ```
 
 ## New observations 2024.02 to 2024.08
+
 ```{r}
 iNat_20240901 <- read_csv("data_Yosemite/iNat_Yos_RG_2024.09.01.csv")
 
@@ -699,9 +768,260 @@ filter(!taxon_species_name %in% unseen_to_RG_summer_24$taxon_species_name)  %>%
   select(user_login, taxon_species_name, observed_on, latitude, longitude) %>%
   arrange(user_login) %>%
   left_join(Yos_species_paper_2 %>% rename(taxon_species_name = accepted_name) %>% select(taxon_species_name, establishment_means, family, broader))
+```
+
+```{r}
+lastpre1990 <- CCH2_data %>%
+  filter(year < 1991) %>%
+  arrange(-year) %>% 
+  select(accepted_name = current_name, last_pre1990_detection = year) %>%
+  group_by(accepted_name) %>% 
+  summarise(last_pre1990_detection = first(last_pre1990_detection)) %>% 
+  ungroup()
 
 
+recent_obs_CCH_showy <- CCH2_data %>%
+  filter(keep_omit == "keep", year > 1989) %>%
+  filter(current_name %in% paper2_fig2$accepted_name) %>%
+  select(accepted_name = current_name, year) %>%
+  left_join(paper2_fig2 %>% select(accepted_name, broader)) %>%
+  mutate(dataset = "CCH") %>%
+  arrange(year) %>%
+  distinct(accepted_name, .keep_all = TRUE) %>%
+  filter(broader == "5.monocot-colorful")
 
+
+Yos_species_paper_2_stats <- Yos_species_paper_2 %>%
+  left_join(recent_obs_CCH %>% select(accepted_name, first_CCH_redetect = year)) %>%
+  left_join(recent_obs_iNat %>% select(accepted_name, first_iNat_detect = year)) %>%
+  left_join(lastpre1990, by = "accepted_name") %>%
+  select(accepted_name, family, broader, establishment_means, first_iNat_detect, first_CCH_redetect, voucher_obs, year_first, iNat_RG_END, recent_voucher, last_pre1990_detection) %>%
+  mutate(
+    first_iNat_detect = as.numeric(first_iNat_detect), 
+    first_CCH_redetect = as.numeric(first_CCH_redetect), 
+    voucher_obs = as.numeric(voucher_obs),
+    year_first = as.numeric(year_first),
+    recent_detection = ifelse(iNat_RG_END == "1" | recent_voucher == "1", 1, NA),
+    first_redetection = ifelse(first_CCH_redetect < first_iNat_detect | (is.na(first_iNat_detect)), first_CCH_redetect, first_iNat_detect),
+    first_redetection = ifelse(is.na(first_redetection), first_iNat_detect, first_redetection),
+    years_since_last_detection = first_redetection - last_pre1990_detection
+    )
+
+redetected <- Yos_species_paper_2_stats %>%
+  filter(!is.na(recent_detection)) %>%
+  select(accepted_name, voucher_obs, last_pre1990_detection) %>%
+  arrange(-last_pre1990_detection)
+
+remaining <- Yos_species_paper_2_stats %>%
+  filter(is.na(recent_detection)) %>%
+  select(accepted_name, voucher_obs, last_pre1990_detection) %>%
+  arrange(-last_pre1990_detection)
+
+prob_detection_by_obs_number <- Yos_species_paper_2_stats %>%
+  select(accepted_name, voucher_obs, last_pre1990_detection, recent_detection) %>%
+  mutate(detected_01 = ifelse(!is.na(recent_detection), 1, 0))
+
+remaining_histogram <- ggplot(data = remaining) +
+  geom_histogram(aes(x = voucher_obs), binwidth = 1) + 
+  scale_x_continuous(limits = c(0, 75), expand = c(0, 0), breaks = c(0, 25, 50, 75)) + 
+  scale_y_continuous(limits = c(0, 110), expand = c(0, 0)) +
+  labs(
+    title = "b. Undetected since 1990"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+redetected_histogram <- ggplot(data = redetected) +
+  geom_histogram(aes(x = voucher_obs), binwidth = 1) + 
+  scale_x_continuous(limits = c(0, 130),expand = c(0, 0)) + 
+  scale_y_continuous(limits = c(0, 110),expand = c(0, 0)) +
+  labs(
+    title = "a. Re-detected 1990-2023"
+  ) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+prob_detection_plot <- ggplot(data= prob_detection_by_obs_number) +
+  geom_point(aes(x = voucher_obs, y= detected_01)) + 
+  scale_y_continuous(limits = c(-0.01, 1.01),expand = c(0, 0))
+
+voucher_count_histograms <- grid.arrange(
+  redetected_histogram, remaining_histogram,
+  ncol = 2,
+  nrow = 1,
+  widths = c(1, 0.6),
+  left = textGrob("species count", rot = 90, gp = gpar(fontsize = 10)),
+  bottom = textGrob("number of pre-1990 vouchers collected", gp = gpar(fontsize = 10))
+)
+
+cowplot::save_plot("outputs/voucher_count_histograms.jpg", voucher_count_histograms, base_width = 8, base_height = 4)
+```
+
+## declining curves by taxon group
+
+```{r}
+counts_per_broader <- Yos_species_paper_2_stats %>% 
+  group_by(broader) %>%
+  mutate(counts_per_broader = n()) %>%
+  ungroup() %>%
+  distinct(broader, counts_per_broader) %>%
+  arrange(broader)
+
+recent_obs <- list(tibble(),tibble(),tibble(),tibble(),tibble())
+summary_detections <- list(tibble(),tibble(),tibble(),tibble(),tibble())
+
+# panel A
+data_tmp <- Yos_species_paper_2_stats %>%
+  filter(!is.na(first_redetection))
+
+# panel B
+data_tmp_iNat_RG <- Yos_species_paper_2_stats %>%
+  filter(!is.na(first_iNat_detect))%>%
+  select(accepted_name, broader, first_iNat_detect) %>%
+  rename(first_redetection = first_iNat_detect)
+
+# panel C
+data_tmp_CCH_only <- Yos_species_paper_2_stats %>%
+  filter(!is.na(first_CCH_redetect)) %>%
+  select(accepted_name, broader, first_CCH_redetect) %>%
+  rename(first_redetection = first_CCH_redetect)
+
+# panel D
+data_tmp_needsID <- iNat_needsID_20240901 %>%
+  rename(accepted_name = taxon_species_name) %>%
+  bind_rows(Yos_iNat) %>%
+  arrange(observed_on) %>%
+  mutate(first_redetection = year(observed_on)) %>%
+  filter(first_redetection > 1989) %>%
+  group_by(accepted_name) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>% 
+  select(accepted_name, observed_on, first_redetection) %>%
+  left_join(Yos_species_paper_2_stats %>% select(accepted_name, broader)) %>%
+  filter(accepted_name %in% Yos_species_paper_2_stats$accepted_name)
+
+for (i in seq_along(1:5)) {
+  recent_obs[[i]] <- data_tmp_needsID %>%
+  filter(broader == counts_per_broader$broader[i]) 
+  
+  summary_detections[[i]] <- recent_obs[[i]] %>%
+    select(first_redetection) %>%
+    group_by(first_redetection) %>%
+    mutate(re_finds_per_year = n()) %>%
+    distinct(re_finds_per_year) %>%
+    ungroup() %>%
+    bind_rows(c("first_redetection" = 1989, "re_finds_per_year" = 0)) %>%
+    arrange(first_redetection) %>%
+    mutate(total_refound = re_finds_per_year,
+           total_refound = accumulate(re_finds_per_year[-1], sum, .init = total_refound[1]),
+           remaining = counts_per_broader$counts_per_broader[i] - total_refound,
+           proportion_remaining = remaining / counts_per_broader$counts_per_broader[i],
+           first_redetection = first_redetection + 1,
+           broader = counts_per_broader$broader[i]
+           ) %>%
+    rename(year = first_redetection)
+  
+  if (max(summary_detections[[i]]$year) < 2024) {
+  summary_detections[[i]] <- summary_detections[[i]] %>%
+    bind_rows(c("year" = 2024, 
+                "re_finds_per_year" = 0, 
+                "total_refound" = max(summary_detections[[i]]$total_refound), 
+                "remaining" = min(summary_detections[[i]]$remaining),
+                "proportion_remaining" = min(summary_detections[[i]]$proportion_remaining)
+    )) %>%
+    mutate(broader = counts_per_broader$broader[i])
+  }
+}
+
+colors_broader <- c("1.ferns/primitive" = "darkgreen","2.gymnosperm" = "brown", "3.dicot"= "#324ab2", 
+                    "4.monocot" = "#808000", "5.monocot-colorful" = "#461257")
+    
+
+RG_and_needsID <- ggplot() +
+  geom_line(aes(x = year, y = proportion_remaining, col = factor(broader)), data = summary_detections[[1]], size = 0.7) +
+  geom_line(aes(x = year, y = proportion_remaining, col = factor(broader)), data = summary_detections[[2]], size = 0.7) +
+  geom_line(aes(x = year, y = proportion_remaining, col = factor(broader)), data = summary_detections[[3]], size = 0.7) +
+  geom_line(aes(x = year, y = proportion_remaining, col = factor(broader)), data = summary_detections[[4]], size = 0.7) +
+  geom_line(aes(x = year, y = proportion_remaining, col = factor(broader)), data = summary_detections[[5]], size = 0.7) +
+  scale_x_continuous(limits = c(1990, 2024),expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  labs(
+    #y = "proportion taxa known in 1990",
+    title = "Detections from Research Grade and needsID observations"
+  ) + 
+  scale_color_manual(values = c("darkgreen", "brown", "#324ab2", "#808000", "#461257"), 
+                    labels = c("ferns and relatives", "gymnosperms", "dicots", "graminoids", "showy monocots"),
+                    name = "Phylogenetic groupings") +
+  theme_classic() +
+  theme(
+    panel.grid.major.y = element_line(linewidth = 0.3, color = "grey80"),
+    axis.title.y = element_blank(),
+    legend.position="none"
+  )
+
+declining_by_type <- grid.arrange(vouchers_only, iNat_RG_only, nrow = 1, widths = c(1, 1.55))
+
+cowplot::save_plot("outputs/declining_by_type.svg", declining_by_type, base_width = 8, base_height = 4)
+
+cowplot::save_plot("outputs/declining_by_RG_and_needsID.svg", RG_and_needsID, base_width = 3.3, base_height = 4)
+```
+
+```{r}
+iNat_total_obs_year <- Yos_iNat %>%
+  mutate(year = year(observed_on)) %>%
+  group_by(year) %>%
+  mutate(iNat_obs_per_year = n()) %>%
+  ungroup() %>%
+  distinct(year, iNat_obs_per_year) %>%
+  filter(year > 2006, year < 2024)
+
+
+iNat_species_detected_per_year <- Yos_iNat %>%
+  mutate(year = year(observed_on)) %>%
+  group_by(year, accepted_name) %>%
+  slice(1) %>%
+  ungroup() %>%
+  group_by(year) %>%
+  mutate(iNat_species_per_year = n()) %>%
+  ungroup() %>%
+  distinct(year, iNat_species_per_year) %>%
+  filter(year > 2006, year < 2024)
+
+
+iNat_counts <- iNat_counts %>% left_join(Yos_species_paper_2 %>% select(accepted_name, voucher_obs, broader))
+
+summary_iNat_RG <- data_tmp_iNat_RG %>%
+    select(first_redetection) %>%
+    group_by(first_redetection) %>%
+    mutate(re_finds_per_year = n()) %>%
+    distinct(re_finds_per_year) %>%
+    ungroup() %>%
+    bind_rows(c("first_redetection" = 1989, "re_finds_per_year" = 0)) %>%
+    arrange(first_redetection) %>%
+    mutate(total_refound = re_finds_per_year,
+           total_refound = accumulate(re_finds_per_year[-1], sum, .init = total_refound[1]),
+           remaining = sum(counts_per_broader$counts_per_broader)- total_refound,
+           proportion_remaining = remaining / sum(counts_per_broader$counts_per_broader),
+           first_redetection = first_redetection + 1
+           ) %>%
+    rename(year = first_redetection) %>%
+  left_join(iNat_total_obs_year) %>%
+  mutate(finds_per_effort = re_finds_per_year/iNat_obs_per_year)
+
+
+ggplot(data = iNat_species_detected_per_year) +
+  geom_point(aes(x=year, y = iNat_species_per_year)) +
+  #geom_point(aes(x=year, y = iNat_obs_per_year/10), data = iNat_total_obs_year, col = "red", pch = 1) +
+  geom_col(aes(x=year, y=re_finds_per_year), data = summary_iNat_RG) +
+  scale_x_continuous(limits=c(2000, 2024), expand = c(0,0)) +
+  scale_y_continuous(limits=c(0,600),expand = c(0,0)) + #, sec.axis = sec_axis(~ . * 10, name = "iNaturalist observations per year")) +
+  labs(
+    y = "species detected per year"
+  )
 ```
 
 
