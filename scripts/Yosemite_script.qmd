@@ -125,22 +125,41 @@ CCH2_taxa %>%
   write_csv("Yosemite_synonyms2.csv")
 ```
 
-## 2. Update all voucher names
+## 2. Process voucher data
 
-### Read in CCH data
+### - Read in CCH data, Synonym table
 
 ```{r}
-Yosemite_list <- read_csv("data_Yosemite/Yosemite_all_data_2024.09.csv") %>%
+
+Yosemite_list <- read_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv") %>%
   select(-voucher_obs, -voucher_obs_coord, -year_first, -year_last, -first_observer)
 
 Yosemite_synonym_lookup <- read_csv("data_Yosemite/Yosemite_synonyms_lookup_2024.06.11.csv") %>%
   select(scientificName = starting_name, current_name, name_source)
 
+park_species_list <- read_csv("data_Yosemite/Yosemite_parks_list_updated_taxonomy.csv")
+
+
+park_species_list_2 <- read_csv("data_Yosemite/NPSpecies_FullList_YOSE_20240216_051634.csv")
+
+
+Yos_data %>%
+ filter(parks_outcome_detailed == "remove, species range far from park") -> far_from_park
+
+park_species_list %>% filter(Accepted_species %in% far_from_park$accepted_name | Accepted_species %in% far_from_park$scientific_name) %>%
+  select(Accepted_species, Name_submitted) %>%
+  left_join(park_species_list_2 %>% select(Name_submitted = `Scientific Name`, Occurrence)) %>% View()
+```
+
+### - Filter CCH data, update taxonomy from lookup table
+
+```{r}
+
 CCH2_data <- read_csv("data_Yosemite/Yosemite_CCH_records_2024_09_22.csv") %>%
-  filter(phylum == "Tracheophyta") %>%                  # retain only vascular plants
-  filter(keep_omit == c("keep")) %>%                            # retain only valid vouchers
-  filter(year > 1859) %>%                               # remove garbage years
-  filter(recordedBy != "Gill, Raymond J.") %>%                  # remove collection with photographic observations only
+  filter(phylum == "Tracheophyta") %>%       # retain only vascular plants
+  filter(keep_omit == c("keep")) %>%         # retain only valid vouchers
+  filter(year > 1859) %>%                    # remove oldest records
+  filter(!stringr::str_detect(recordedBy_simple, "Gill, Raymond J")) %>%                  # remove collection with photographic observations only
   filter(stringr::str_detect(scientificName, " ")) %>%  # remove genera
   left_join(Yosemite_synonym_lookup) %>%
   select(current_name, scientificName, keep_omit, institutionCode, recordedBy_simple, eventDate, year, locality, institutionCode, 
@@ -148,7 +167,11 @@ CCH2_data <- read_csv("data_Yosemite/Yosemite_CCH_records_2024_09_22.csv") %>%
   filter(!is.na(current_name))
 ```
 
-### DON'T RUN: Read in Yosemite shapefile,
+### - Merge in GBIF samples
+
+`{r} gbif_to_include <- read_csv("data_Yosemite/Yosemite_GBIF_records_2024.06.14.csv") %>%   filter(keep_omit == "keep")  voucher_data <- CCH2_data %>%   bind_rows(gbif_to_include %>% rename(scientificName = scientific_name))}`
+
+#### DON'T RUN: Read in Yosemite shapefile
 
 No longer need to run each time
 
@@ -158,7 +181,7 @@ yos_sf <- st_transform(yos, crs = 4326)
 yos_simp <- st_make_valid(yos_sf) %>% st_polygonize
 ```
 
-### DON'T RUN: Find GBIF samples not in CCH, update names
+#### DON'T RUN: Find GBIF samples not in CCH, update names
 
 No longer need to run each time
 
@@ -180,18 +203,30 @@ yos_gbif <-
   write_csv("data_Yosemite/GBIF_only.csv")
 ```
 
-### Merge in GBIF samples
+### - DON'T RUN: Merge in Symbiota
+
+Symbiota is another park list that we uncovered late in the process. It mostly aligns with the park list, but already throws out some of the odd entries. And also has a few newer ones.
 
 ```{r}
-gbif_to_include <- read_csv("data_Yosemite/Yosemite_GBIF_records_2024.06.14.csv") %>%
-  filter(keep_omit == "keep")
 
-voucher_data <- CCH2_data %>%
-  bind_rows(gbif_to_include %>% rename(scientificName = scientific_name))
+Symbiota <- read_csv("data_Yosemite/Symbiota_Yosemite National Park_1718164113.csv")
 
+Symbiota2 <- Symbiota %>%   
+  rename(scientificName = ScientificName) %>%   
+  left_join(Yosemite_synonym_lookup) %>%   
+  select(current_name) %>%   
+  rename(scientific_name = current_name) %>%   
+  distinct() %>%   
+  mutate(symbiota = "in Symbiota")  
+
+read_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv") %>%   
+  full_join(Symbiota2) %>%   
+  write_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv", na = "")
 ```
 
-## 3. Create final summaries for years, voucher counts
+## 3. Summary statistics for vouchers
+
+### - Create summaries
 
 ```{r}
 voucher_counts_raw <-
@@ -279,7 +314,7 @@ voucher_data %>%
   rename(first_observer = recordedBy_simple) -> counts_per_collector
 ```
 
-## 4. Merge data into Yosemite file
+### - Merge various voucher summaries into a single data frame
 
 ```{r}
 voucher_summary <- Yosemite_list %>%
@@ -304,7 +339,7 @@ voucher_summary %>%
   write_csv("outputs/collector_stats.csv")
 ```
 
-## 5. DON'T RUN: Checks
+#### DON'T RUN: Checks
 
 If there are NA's in voucher counts where there shouldn't be it is because of synonym matching between CCH and my master sheet. I'm progressively dealing with these and have finished all the ones where vouchers are retained
 
@@ -329,7 +364,7 @@ synonym_complete %>%
   write_csv("outputs/Yosemite_synonym_lookup_2024_temp.csv", na= "")
 ```
 
-## 6. Merge in voucher summary
+### - Merge voucher summary into Yosemite data file
 
 setup to remerge easily - but be careful not to overwrite a file you don't want to
 
@@ -343,33 +378,133 @@ read_csv("data_Yosemite/Yosemite_all_data_2024.09.csv") %>%
   write_csv("data_Yosemite/Yosemite_all_data_2024_09_22.csv", na = "")
 ```
 
-### 7. DON'T RUN: Symbiota
+## 4. Determine which "add-on" vouchers do/don't have valid coordinates
+
+There were 339 species that were found through manual searches. Some were found because they were taxa on the park list or in iNat, but ostensibly didn't have vouchers. Others were found during a second search when all CCH vouchers in Tuolumne, Madera, and Mariposa counties were designated as "in" or "out" of the park based on locality names. However, to aline the data based on the 4 error categories, these had to be attributed to either a taxonomic error (synonym that wasn't picked up because of all the weird variants in CCH2 download that didn't have perfect matches in TNRS) or geographic error (coordinates). This code indicates which of these taxa didn't have any vouchers with coordinates inside the park boundary - because of coordinate errors.
 
 ```{r}
-read_csv("data_Yosemite/Symbiota_Yosemite National Park_1718164113.csv") -> Symbiota
+add_on_Yos_vouchers <- Yos_data %>%
+  filter(voucher_outcome_detailed %in% c(
+    "add, coordinates erroneously outside protected area or missing coordinates",
+    "add, vouchers missed due to undetected synonyms"
+  )) %>%
+  select(accepted_name)
 
-Symbiota2 <- Symbiota %>%
-  rename(scientificName = ScientificName) %>%
-  left_join(Yosemite_synonym_lookup) %>%
-  select(current_name) %>%
-  rename(scientific_name = current_name) %>%
+voucher_data_no_coord <- voucher_data %>%
+  filter(is.na(decimalLatitude)|is.na(decimalLongitude)) %>%
+  distinct(current_name)
+
+voucher_data_with_coord <- voucher_data %>%
+  filter(!is.na(decimalLatitude)&!is.na(decimalLongitude))
+
+df_sf <-
+    st_as_sf(
+      voucher_data_with_coord,
+      coords = c("decimalLongitude", "decimalLatitude"),
+      crs = st_crs(yos_simp)
+    )
+  
+voucher_data_with_coord$inside_kml <- st_within(df_sf, yos_simp, sparse = FALSE)
+
+voucher_data_with_coord_inside_Yos <- voucher_data_with_coord %>% 
+  filter(inside_kml) %>% 
+  distinct(current_name)
+
+voucher_data_with_coord_outside_Yos <- voucher_data_with_coord %>% 
+  filter(!inside_kml) %>% 
+  distinct(current_name)
+
+species_no_Yos_coords <- voucher_data_no_coord %>%
+  bind_rows(voucher_data_with_coord_outside_Yos) %>%
   distinct() %>%
-  mutate(symbiota = "in Symbiota")
+  filter(current_name %in% add_on_Yos_vouchers$accepted_name) %>%
+  filter(!current_name %in% voucher_data_with_coord_inside_Yos$current_name) %>%
+  mutate(extra_info = "no vouchers with coordinates in park boundary") %>%
+  rename(accepted_name = current_name)
 
-read_csv("data_Yosemite/Yosemite_all_data_2024.06.13.csv") %>%
-  full_join(Symbiota2) %>%
-  write_csv("data_Yosemite/Yosemite_all_data_2024.06.13.csv", na = "")
+Yos_data <- Yos_data %>%
+  left_join(species_no_Yos_coords) %>%
+  write_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv", na = "")
 ```
 
-## 7 Euler diagrams
+## 5. Create column of synonyms
+
+Symbiota is another park list that we uncovered late in the process. It mostly aligns with the park list, but already throws out some of the odd entries. And also has a few newer ones.
 
 ```{r}
-Yos_data <- read_csv("data_Yosemite/Yosemite_all_data_2024_09_22.csv")
+park_synonyms <- read_csv("data_Yosemite/Yosemite_parks_list_updated_taxonomy.csv") %>%
+  select(synonyms = Name_submitted, current_name = Accepted_species)
+
+all_synonyms <- Yosemite_synonym_lookup %>% 
+  select(synonyms = scientificName, current_name) %>%
+  bind_rows(park_synonyms) %>%
+  distinct() %>%
+  filter(current_name != synonyms) %>%
+  arrange(current_name, synonyms) %>%
+  group_by(current_name) %>%
+  mutate(synonyms = paste0(synonyms, collapse = "; ")) %>%
+  ungroup() %>%
+  distinct() %>%
+  rename(scientific_name = current_name)
+
+Yos_data %>% 
+  left_join(all_synonyms) %>%
+  write_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv", na = "")
+```
+
+## 6. Check manually for iNat taxa only in Ackerson Mdw addition
+
+Ackerson Meadow area is not included in the Yosemite polygon on iNat
+
+But the download extends beyond the part of Ackerson Meadow that is now in the park, because of its convoluted shape...
+
+16 taxa initially indicated of which 10 needed to be added to the list for having an iNat RG observation within the actual park boundaries.
+
+```{r}
+
+Ackerson_area_iNat <- read_csv("data_Yosemite/Ackerson_Meadow_iNat_observations-483455.csv")
+
+taxa_in_iNat <- Yos_data %>% 
+  filter(iNat_RG_END == 1)
+
+Ackerson_area_unique_taxa <- Ackerson_area_iNat %>%
+  filter(created_at < "2024-02-15 23:47:04 UTC") %>%
+  distinct(taxon_species_name) %>%
+  filter(!taxon_species_name %in% taxa_in_iNat$accepted_name)
+
+# > Ackerson_area_unique_taxa
+# # A tibble: 16 × 1
+#    taxon_species_name         
+#    <chr>                      
+#  1 Navarretia intertexta      
+#  2 Sclerolinon digynum        
+#  3 Gratiola ebracteata        
+#  4 Viola arvensis             
+#  5 Lupinus bicolor            
+#  6 Pteridium aquilinum        
+#  7 Calycadenia mollis         
+#  8 Alopecurus aequalis        
+#  9 Ranunculus aquatilis       
+# 10 Astragalus cicer           
+# 11 Castilleja attenuata       
+# 12 Veronica peregrina         
+# 13 Montia linearis            
+# 14 Polygonum douglasii        
+# 15 Leptosiphon montanus       
+# 16 Calycadenia multiglandulosa
+```
+
+## 7. Euler diagrams
+
+```{r}
+
+Yos_data <- read_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv")
 ```
 
 ### - starting data
 
 ```{r}
+
 start <- Yos_data %>%
   mutate(
     voucher_start = ifelse(voucher_START == 1, TRUE, NA),
@@ -407,6 +542,7 @@ parks_start_prop <- parks_start_count / total_count_start
 ### - ending data
 
 ```{r}
+
 end <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   mutate(
@@ -440,6 +576,7 @@ parks_end_count <- sum(parks_end$counts)
 ### - ending data - showy
 
 ```{r}
+
 showy <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   filter(broader != "4.monocot") %>%
@@ -467,6 +604,7 @@ iNat_end_showy_prop <- iNat_end_showy_count / total_count_end_showy
 ### - ending data - graminoids
 
 ```{r}
+
 graminoid <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   filter(broader == "4.monocot") %>%
@@ -494,6 +632,7 @@ iNat_end_graminoid_prop <- iNat_end_graminoid_count / total_count_end_graminoid
 ### - ending data - natives
 
 ```{r}
+
 native <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   filter(establishment_means == "native") %>%
@@ -516,6 +655,7 @@ plot(native_fit, quantities = TRUE, labels = TRUE)
 ### - ending data - introduced
 
 ```{r}
+
 introduced <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>% 
   filter(establishment_means == "introduced") %>%
@@ -538,6 +678,7 @@ plot(introduced_fit, quantities = TRUE, labels = TRUE)
 ### - ending data - old vouchers only
 
 ```{r}
+
 old_vouchers <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   filter(old_voucher == 1 & is.na(recent_voucher)) %>%
@@ -566,6 +707,7 @@ iNat_end_old_prop <- iNat_end_old_count / total_count_end_old
 ### - ending data - old & recent vouchers
 
 ```{r}
+
 old_and_recent_vouchers <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   filter(recent_voucher == 1 & old_voucher == 1) %>%
@@ -593,6 +735,7 @@ iNat_end_old_recent_prop <- iNat_end_old_recent_count / total_count_end_old_rece
 ### - ending data - recent vouchers only
 
 ```{r}
+
 recent_vouchers <- Yos_data %>%
   filter(voucher_END == 1 | in_park_END == 1 | iNat_RG_END == 1) %>%
   filter(recent_voucher == 1 & is.na(old_voucher)) %>%
@@ -622,15 +765,17 @@ iNat_end_recent_prop <- iNat_end_recent_count / total_count_end_recent
 ### - unique voucher outcomes
 
 ```{r}
+
 # unique voucher outcomes
 voucher_outcomes_unique <- Yos_data %>%
   distinct(voucher_outcome, voucher_outcome_detailed) %>%
   mutate(
-    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
     voucher_outcome_detailed = factor(voucher_outcome_detailed, levels = c(
-      "retain exact name", "retain species under synonymous name",
-      "remove, coordinates erroneously inside park",
-      "add, coordinates erroneously outside park or missing coordinates",
+      "retain exact name", 
+      "retain species, replacing taxonomic synonym or misapplied name with accepted name",
+      "remove, coordinates erroneously inside protected area",
+      "add, coordinates erroneously outside protected area or missing coordinates",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
@@ -641,11 +786,11 @@ voucher_outcomes_unique <- Yos_data %>%
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
       "XX-synonym", 
-      "XX-no voucher, but occurs in park", 
-      "XX-no voucher, not in park", 
-      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected due to 'incorrect identification'; not in park",
-      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected due to 'untraced taxonomic error'; not in park",
-      "XX-voucher with 'coordinates erroneously outside park or missing coordinates' found, but rejected because 'horticultural record'; not in park",
+      "XX-no voucher, but occurs in protected area", 
+      "XX-no voucher, not in protected area", 
+      "XX-voucher with 'coordinates erroneously outside protected area or missing coordinates' found, but rejected due to 'incorrect identification'; not in protected area",
+      "XX-voucher with 'coordinates erroneously outside protected area or missing coordinates' found, but rejected due to 'untraced taxonomic error'; not in protected area",
+      "XX-voucher with 'coordinates erroneously outside protected area or missing coordinates' found, but rejected because 'horticultural record'; not in protected area",
       "XX-vouchers missed due to 'undetected synonyms' found, but rejected due to 'untraced taxonomic error'", 
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
@@ -656,18 +801,19 @@ voucher_outcomes_unique <- Yos_data %>%
 ### - voucher outcomes detailed
 
 ```{r}
+
 # summarise voucher outcomes
 voucher_outcomes <- Yos_data %>%
   select(outcome = voucher_outcome_detailed, voucher_outcome) %>%
   filter(!is.na(outcome)) %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
-  filter(!stringr::str_starts(outcome, "add")) %>%
+  #filter(!stringr::str_starts(outcome, "add")) %>%
   mutate(
-    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    voucher_outcome = factor(voucher_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
     outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
-      "remove, coordinates erroneously inside park",
-      "add, coordinates erroneously outside park or missing coordinates",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
+      "remove, coordinates erroneously inside protected area",
+      "add, coordinates erroneously outside protected area or missing coordinates",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
@@ -699,13 +845,14 @@ ggplot(voucher_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
 ### - voucher outcomes collapsed
 
 ```{r}
+
  voucher_outcomes_collapsed <- Yos_data %>%
   select(outcome = voucher_outcome, voucher_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
   filter(!stringr::str_starts(outcome, "XX") & !stringr::str_starts(voucher_outcome_detailed, "add")) %>%
   select(-voucher_outcome_detailed) %>%
   mutate(
-    outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))
+    outcome = factor(outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))
   ) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
@@ -733,6 +880,7 @@ ggplot(voucher_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
 ### - voucher add-on outcomes
 
 ```{r}
+
 add_ons_vouchers <- Yos_data %>%
   select(outcome = voucher_outcome, voucher_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
@@ -767,12 +915,13 @@ ggplot(add_ons_vouchers, aes(x="", y=outcome_counts, fill=outcome))+
 ### - unique parks list outcomes
 
 ```{r}
+
 park_outcomes_unique <- Yos_data %>%
   distinct(parks_outcome, parks_outcome_detailed) %>%
   mutate(
-    parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+    parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
     parks_outcome_detailed = factor(parks_outcome_detailed, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain because vouchers for species are close to the park",
       "retain, misapplied",
       "remove, species range far from park",
@@ -786,8 +935,8 @@ park_outcomes_unique <- Yos_data %>%
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
       "XX-synonym", "XX-misapplied",
-      "XX-not on parks list, but occurs in park", 
-      "XX-not on parks list, not in park",
+      "XX-not on parks list, but occurs in protected area", 
+      "XX-not on parks list, not in protected area",
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
     ) %>%
@@ -797,12 +946,14 @@ park_outcomes_unique <- Yos_data %>%
 ### - parks list outcomes detailed
 
 ```{r}
+
 parklist_outcomes <- Yos_data %>%
   select(outcome = parks_outcome_detailed, parks_outcome) %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
-  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
+  filter(!stringr::str_starts(outcome, "add")) %>%
+  mutate(parks_outcome = factor(parks_outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy", "XX-synonym", "XX-not in graphics")),
     outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain because vouchers for species are close to the park",
       "retain, misapplied",
       "remove, species range far from park",
@@ -814,8 +965,8 @@ parklist_outcomes <- Yos_data %>%
       "add, known vouchers missing from biodiversity portal",
       "vouchers missed due to undetected synonyms",
       "XX-synonym", "XX-misapplied",
-      "XX-not on parks list, but occurs in park", 
-      "XX-not on parks list, not in park",
+      "XX-not on parks list, but occurs in protected area", 
+      "XX-not on parks list, not in protected area",
       "XX-iNat needs ID only", "XX-Symbiotica only"
     ))
         ) %>%
@@ -841,13 +992,14 @@ ggplot(parklist_outcomes, aes(x="", y=outcome_counts, fill=outcome))+
 ### - parks list outcomes collapsed
 
 ```{r}
+
 # summarise parks list outcomes
 parklist_outcomes_collapsed <- Yos_data %>%
   select(outcome = parks_outcome, parks_outcome_detailed) %>%
   filter(!stringr::str_starts(outcome, "XX")) %>%
   filter(!stringr::str_starts(parks_outcome_detailed, "add")) %>%
   select(-parks_outcome_detailed) %>%
-  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species under synonymous name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))) %>%
+  mutate(outcome = factor(outcome, levels = c("retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name", "retain because vouchers for species are close to the park", "geographic error", "identification error", "taxonomic or nomenclatural error", "databasing discrepancy"))) %>%
   group_by(outcome) %>%
   mutate(outcome_counts = n()) %>%
   ungroup() %>%
@@ -874,6 +1026,7 @@ ggplot(parklist_outcomes_collapsed, aes(x="", y=outcome_counts, fill=outcome))+
 ### - park list add-on outcomes
 
 ```{r}
+
 add_ons_parks <- Yos_data %>%
   select(outcome = parks_outcome, parks_outcome_detailed) %>%
   filter(!is.na(outcome)) %>%
@@ -903,20 +1056,20 @@ iNat_outcomes_unique <- Yos_data %>%
     iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "restricted license"), "retain, but restricted license", iNat_outcome_detailed),
     iNat_outcome_detailed = ifelse(stringr::str_detect(iNat_outcome_detailed, "exact name"), "retain exact name", iNat_outcome_detailed),
     iNat_outcome_detailed = factor(iNat_outcome_detailed, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain, but restricted license",
-      "remove, coordinates erroneously inside park",
+      "remove, coordinates erroneously inside protected area",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
       "remove, horticultural record",
       "add, observations lost due to auto-obscured coordinates",
       "add, observations lost due manually obscured coordinates",
-      "add, observations lost due to inaccurate protected area polygon",
+      "add, iNaturalist's protected area polygon out-of-date and excluded valid observation",
       "add, needsID observation that likely correct",
       "XX-synonym", 
-      "XX-not in iNat, but occurs in park", 
-      "XX-not in iNat, not in park",
+      "XX-not in iNat, but occurs in protected area", 
+      "XX-not in iNat, not in protected area",
       "XX-iNat needs ID only", "XX-Symbiotica only"
       ))
     ) %>%
@@ -931,6 +1084,7 @@ iNat_outcomes_unique <- Yos_data %>%
 iNat_outcomes <- Yos_data %>%
   select(outcome = iNat_outcome_detailed, iNat_outcome) %>%
   filter(!stringr::str_starts(iNat_outcome, "XX")) %>%
+  #filter(!stringr::str_starts(outcome, "add")) %>%
   mutate(
       outcome = ifelse(
         stringr::str_detect(outcome, "restricted license"), 
@@ -947,16 +1101,16 @@ iNat_outcomes <- Yos_data %>%
       "XX-synonym", "XX-not in graphics"
       )),
     outcome = factor(outcome, levels = c(
-      "retain exact name", "retain species under synonymous name",
+      "retain exact name", "retain species, replacing taxonomic synonym or misapplied name with accepted name",
       "retain, but restricted license",
-      "remove, coordinates erroneously inside park",
+      "remove, coordinates erroneously inside protected area",
       "remove, incorrect identification",
       "remove, misapplied name",
       "remove, double or triple listing due to synonymy",
       "remove, horticultural record",
       "add, observations lost due to auto-obscured coordinates",
       "add, observations lost due manually obscured coordinates",
-      "add, observations lost due to inaccurate protected area polygon"
+      "add, iNaturalist's protected area polygon out-of-date and excluded valid observation",
   ))
   ) %>%
   group_by(outcome) %>%
@@ -1045,7 +1199,7 @@ ggplot(add_ons_iNat, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())   
 ```
 
-### DON'T RUN: flowchart middle figure
+## 9. DON'T RUN: Figure 2 Euler diagram for post-automated steps; is approximate
 
 File for this isn't on GutHub
 
@@ -1071,9 +1225,9 @@ plot(end_fit, quantities = FALSE, labels = FALSE, lwd = 2)
 
 ```
 
-### final statistics
+## 10. Final statistics
 
-#### overall counts
+### - overall counts
 
 ```{r}
 #final species count: 
@@ -1099,7 +1253,7 @@ final_voucher_count <- Yos_data %>% filter(voucher_END == 1) %>% nrow()
 final_voucher_count / total_species_count
 ```
 
-#### voucher counts end
+### - voucher counts end
 
 ```{r}
 Yos_data %>% filter(in_park_END == 1) %>% nrow() / Yos_data %>% filter(final_list == 1) %>% nrow()
@@ -1113,7 +1267,7 @@ new_only <- Yos_data %>% filter(final_list == 1, is.na(old_voucher), recent_vouc
 graminoid <- Yos_data %>% filter(broader == "4.monocot") %>% nrow()
 ```
 
-#### iNat proportions
+### - iNat proportions
 
 ```{r}
 iNat_and_old <- 
@@ -1150,7 +1304,7 @@ iNat_graminoid / graminoid
 
 ```
 
-#### park proportions
+### - park proportions
 
 ```{r}
   Yos_data %>% 
@@ -1198,6 +1352,31 @@ Yos_data %>%
   filter(in_park_END == 1)
 
 1301/1390
+```
 
+### - lists of unique species by resource
 
+```{r}
+
+iNat_only <- Yos_data %>% 
+  filter(iNat_RG_END == 1 & is.na(voucher_END) & is.na(in_park_END)) %>%
+  select(accepted_name, family, establishment_means, broader) %>%
+  distinct() %>%
+  mutate(group = "iNaturalist only")
+
+voucher_only <- Yos_data %>% 
+  filter(is.na(iNat_RG_END) & voucher_END == 1 & is.na(in_park_END)) %>%
+  select(accepted_name, family, establishment_means, broader) %>%
+  distinct() %>%
+  mutate(group = "voucher only")
+
+parklist_only <- Yos_data %>% 
+  filter(is.na(iNat_RG_END) == 1 & is.na(voucher_END) & in_park_END == 1) %>%
+  select(accepted_name, family, establishment_means, broader) %>%
+  distinct() %>%
+  mutate(group = "protected area list only")
+
+species_list <- voucher_only %>%
+  bind_rows(parklist_only, iNat_only) %>%
+  write_csv("data_Yosemite/Yosemite_unique_species.csv")
 ```
