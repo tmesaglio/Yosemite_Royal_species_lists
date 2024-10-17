@@ -498,7 +498,7 @@ Ackerson_area_unique_taxa <- Ackerson_area_iNat %>%
 
 ```{r}
 
-Yos_data <- read_csv("data_Yosemite/Yosemite_all_data_2024_10_03.csv")
+Yos_data <- read_csv("data_Yosemite/Yosemite_all_data_2024_10_17.csv")
 ```
 
 ### - starting data
