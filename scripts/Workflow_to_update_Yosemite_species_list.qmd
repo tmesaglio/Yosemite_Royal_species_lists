@@ -1,0 +1,78 @@
+---
+title: "Workflow to update Yosemite species list"
+format: html
+editor: visual
+---
+
+A workflow to maintain an up-to-date
+
+## Download iNaturalist data
+
+1.  go to inaturalist.org
+2.  select `Explore` and `Phylum Tracheophyta` (vascular plants)
+3.  Under filters, select `Research Grade`
+4.  Under "more filters" select `Place = Yosemite National Park`
+5.  Select `Download`
+6.  Ensure you select the column `taxon_species_name`
+7.  download the data, extract (if necessary) and ensure it is saved as a `.csv` file in a folder `data`
+
+## Download Yosemite voucher data via the California Consortium of Herbaria (CCH2)
+
+1.  go to inaturalist.org
+2.  select `Explore` and `Phylum Tracheophyta` (vascular plants)
+3.  Under filters, select `Research Grade`
+4.  Under "more filters" select `Place = Yosemite National Park`
+5.  Select `Download`
+6.  Ensure you select the column `taxon_species_name`
+7.  download the data, extract (if necessary) and ensure it is saved as a `.csv` file in a folder `data`
+
+## Open libraries, read in files
+
+```{r}
+
+library(tidyverse)
+library(sf)
+library(data.table)
+
+# read in iNaturalist records
+iNat_records <- read_csv("data/iNat_records_download.csv")
+
+# read in CCH2 records
+
+# read in the taxonomy lookup table generated for this project, documenting all synonyms/misapplication/etc for Yosemite vouchers
+CCH_synonyms <- read_csv("data_Yosemite/Yosemite_synonyms_lookup_2024.06.11.csv") %>%
+  distinct(starting_name, .keep_all = TRUE) %>%
+  rename(CCH_synonym = current_name)
+
+
+
+```
+
+```{r}
+
+# read in Yosemite shapefile
+yos <- st_read("data_Yosemite/Yosemite.kml")
+
+# set 
+yos_sf <- st_transform(yos, crs = 4326)
+yos_simp <- st_make_valid(yos_sf) %>% st_polygonize
+```
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
