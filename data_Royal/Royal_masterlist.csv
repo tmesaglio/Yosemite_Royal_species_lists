@@ -143,7 +143,6 @@ Trachymene incisa,Araliaceae,3.dicot,native,1,1,
 Acanthospermum australe,Asteraceae,3.dicot,introduced,1,1,1
 Ageratina adenophora,Asteraceae,3.dicot,introduced,1,1,1
 Ageratina riparia,Asteraceae,3.dicot,introduced,1,1,1
-Ageratum houstonianum,Asteraceae,3.dicot,introduced,,,
 Arctotheca calendula,Asteraceae,3.dicot,introduced,1,,
 Arctotheca populifolia,Asteraceae,3.dicot,introduced,1,1,
 Arrhenechthites mixtus,Asteraceae,3.dicot,native,,1,
@@ -189,9 +188,7 @@ Gamochaeta purpurea,Asteraceae,3.dicot,introduced,1,,
 Gymnocoronis spilanthoides,Asteraceae,3.dicot,introduced,1,1,1
 Hypochaeris glabra,Asteraceae,3.dicot,introduced,1,,
 Hypochaeris radicata,Asteraceae,3.dicot,introduced,1,,
-Lagenophora brachyglossa,Asteraceae,3.dicot,native,,,
 Lagenophora sublyrata,Asteraceae,3.dicot,native,1,,1
-Leontodon saxatilis,Asteraceae,3.dicot,introduced,,,
 Leptinella longipes,Asteraceae,3.dicot,native,1,1,
 Olearia elliptica,Asteraceae,3.dicot,native,1,1,
 Olearia microphylla,Asteraceae,3.dicot,native,1,1,1
@@ -231,12 +228,10 @@ Anredera cordifolia,Basellaceae,3.dicot,introduced,1,1,
 Begonia cucullata,Begoniaceae,3.dicot,introduced,,,1
 Nandina domestica,Berberidaceae,3.dicot,introduced,,,1
 Campsis × tagliabueana,Bignoniaceae,3.dicot,introduced,,,1
-Catalpa bignonioides,Bignoniaceae,3.dicot,introduced,,,
 Pandorea pandorana,Bignoniaceae,3.dicot,native,1,1,1
 Hackelia latifolia,Boraginaceae,3.dicot,native,,1,
 Heliotropium amplexicaule,Boraginaceae,3.dicot,introduced,,,1
 Cakile edentula,Brassicaceae,3.dicot,introduced,1,,
-Cakile maritima,Brassicaceae,3.dicot,introduced,,,
 Lepidium bonariense,Brassicaceae,3.dicot,introduced,1,,
 Lepidium pseudotasmanicum,Brassicaceae,3.dicot,native,1,1,
 Rorippa gigantea,Brassicaceae,3.dicot,native,1,1,
@@ -867,7 +862,6 @@ Pomax umbellata,Rubiaceae,3.dicot,native,1,,1
 Psychotria loniceroides,Rubiaceae,3.dicot,native,1,1,1
 Richardia humistrata,Rubiaceae,3.dicot,introduced,,,1
 Richardia stellaris,Rubiaceae,3.dicot,introduced,1,,1
-Sherardia arvensis,Rubiaceae,3.dicot,introduced,,,
 Acronychia oblongifolia,Rutaceae,3.dicot,native,1,1,
 Boronia barkeriana,Rutaceae,3.dicot,native,1,1,
 Boronia floribunda,Rutaceae,3.dicot,native,1,1,1
@@ -1070,7 +1064,6 @@ Juncus caespiticius,Juncaceae,4.monocot-graminoid,native,1,1,
 Juncus capillaceus,Juncaceae,4.monocot-graminoid,introduced,1,1,
 Juncus cognatus,Juncaceae,4.monocot-graminoid,introduced,1,1,
 Juncus continuus,Juncaceae,4.monocot-graminoid,native,1,1,
-Juncus dichotomus,Juncaceae,4.monocot-graminoid,introduced,,,
 Juncus effusus,Juncaceae,4.monocot-graminoid,introduced,1,1,
 Juncus flavidus,Juncaceae,4.monocot-graminoid,native,1,1,
 Juncus homalocaulis,Juncaceae,4.monocot-graminoid,native,1,1,
@@ -1103,7 +1096,6 @@ Aristida warburgii,Poaceae,4.monocot-graminoid,native,1,,
 Arundo donax,Poaceae,4.monocot-graminoid,introduced,1,,
 Austrostipa mollis,Poaceae,4.monocot-graminoid,native,1,1,
 Austrostipa pubescens,Poaceae,4.monocot-graminoid,native,1,1,
-Austrostipa ramosissima,Poaceae,4.monocot-graminoid,native,,,
 Austrostipa rudis,Poaceae,4.monocot-graminoid,native,,1,
 Axonopus fissifolius,Poaceae,4.monocot-graminoid,introduced,1,1,
 Bothriochloa decipiens,Poaceae,4.monocot-graminoid,native,,1,
@@ -1219,7 +1211,6 @@ Nothoscordum gracile,Amaryllidaceae,5.monocot-showy,introduced,,,1
 Sprekelia formosissima,Amaryllidaceae,5.monocot-showy,introduced,,,1
 Alocasia brisbanensis,Araceae,5.monocot-showy,native,,,1
 Arum italicum,Araceae,5.monocot-showy,introduced,,,1
-Colocasia fontanesii,Araceae,5.monocot-showy,introduced,,,
 Gymnostachys anceps,Araceae,5.monocot-showy,native,1,1,1
 Typhonium eliosurum,Araceae,5.monocot-showy,native,1,1,
 Zantedeschia aethiopica,Araceae,5.monocot-showy,introduced,1,1,1
@@ -1245,7 +1236,6 @@ Sowerbaea juncea,Asparagaceae,5.monocot-showy,native,1,1,1
 Thysanotus juncifolius,Asparagaceae,5.monocot-showy,native,1,1,
 Thysanotus tuberosus,Asparagaceae,5.monocot-showy,native,,1,1
 Thysanotus virgatus,Asparagaceae,5.monocot-showy,native,1,1,1
-Aloe maculata,Asphodelaceae,5.monocot-showy,introduced,,,
 Caesia parviflora,Asphodelaceae,5.monocot-showy,native,1,1,1
 Dianella caerulea,Asphodelaceae,5.monocot-showy,native,1,1,1
 Dianella congesta,Asphodelaceae,5.monocot-showy,native,,,1
@@ -1283,10 +1273,8 @@ Vallisneria nana,Hydrocharitaceae,5.monocot-showy,native,,1,
 Hypoxis hygrometrica,Hypoxidaceae,5.monocot-showy,native,1,1,
 Aristea ecklonii,Iridaceae,5.monocot-showy,introduced,,,1
 Dietes grandiflora,Iridaceae,5.monocot-showy,introduced,,,1
-Dietes iridioides,Iridaceae,5.monocot-showy,introduced,,,
 Freesia alba × leichtlinii,Iridaceae,5.monocot-showy,native,1,,
 Gladiolus × hortulanus,Iridaceae,5.monocot-showy,introduced,,,1
-Gladiolus carneus,Iridaceae,5.monocot-showy,introduced,,,
 Gladiolus undulatus,Iridaceae,5.monocot-showy,introduced,1,1,1
 Herbertia lahue,Iridaceae,5.monocot-showy,introduced,,,1
 Libertia paniculata,Iridaceae,5.monocot-showy,native,1,1,1
