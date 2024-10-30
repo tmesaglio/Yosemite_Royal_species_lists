@@ -1011,7 +1011,9 @@ ggplot(add_ons_iNat, aes(x="", y=outcome_counts, fill=outcome))+
   theme(axis.text.x=element_blank())   
 ```
 
-## 9.  Extra statistics
+## 9. Extra statistics
+
+### - lists of unique species by resource
 
 ```{r}
 iNat_only <- Royal_data %>% 
@@ -1035,4 +1037,31 @@ parklist_only <- Royal_data %>%
 species_list <- voucher_only %>%
   bind_rows(parklist_only, iNat_only) %>%
   write_csv("data_Royal/Royal_unique_species.csv")
+```
+
+### Master list
+
+```{r}
+Royal_masterlist <- Royal_data %>%
+  filter(final_list ==1) %>%
+  select(accepted_name, family, broader, establishment_means, park_list = in_park_END, voucher_exists = voucher_END, iNat_RG_record_exists = iNat_RG_END)
+
+Royal_masterlist %>%
+  filter(voucher_exists == 1) %>%
+  nrow()
+# 1052
+
+Royal_masterlist %>%
+  filter(iNat_RG_record_exists == 1) %>%
+  nrow()
+# 704
+
+Royal_masterlist %>%
+  filter(park_list == 1) %>%
+  nrow()
+
+# 1260
+
+Royal_masterlist %>% write_csv("data_Royal/Royal_masterlist.csv", na = "")
+
 ```
