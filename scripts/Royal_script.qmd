@@ -1043,7 +1043,7 @@ species_list <- voucher_only %>%
 
 ```{r}
 Royal_masterlist <- Royal_data %>%
-  filter(final_list ==1) %>%
+  filter(in_park_END == 1 | voucher_END == 1 | iNat_RG_END == 1) %>%
   select(accepted_name, family, broader, establishment_means, park_list = in_park_END, voucher_exists = voucher_END, iNat_RG_record_exists = iNat_RG_END)
 
 Royal_masterlist %>%
