@@ -464,7 +464,7 @@ iNat RG record few metres outside the park,Coreopsis lanceolata,Coreopsis lanceo
 ,Digitaria didactyla,Digitaria didactyla,current,Poaceae,4.monocot,introduced,,1,1,,1,1,,1,,,1,needsID-likely correct,retain on list,retain voucher,old_vouchers_only,1973,1973,yes_correct,,
 ,Digitaria ischaemum,Digitaria ischaemum,current,Poaceae,4.monocot,introduced,,1,1,,1,1,,1,,,1," XX-not in iNat, yes in park",retain on list,retain voucher,old_vouchers_only,1973,1973,none,,
 ,Digitaria parviflora,Digitaria parviflora,current,Poaceae,4.monocot,native,,1,1,,1,1,,1,,,1," XX-not in iNat, yes in park",retain on list,retain voucher,old_vouchers_only,1929,1931,none,,
-,Digitaria sanguinalis,Digitaria sanguinalis,current,Poaceae,4.monocot,native,,1,,,1,,,,,,1," XX-not in iNat, yes in park",retain on list,"no voucher, but exists in park",no_vouchers,,,none,,
+,Digitaria sanguinalis,Digitaria sanguinalis,current,Poaceae,4.monocot,introduced,,1,,,1,,,,,,1," XX-not in iNat, yes in park",retain on list,"no voucher, but exists in park",no_vouchers,,,none,,
 "Dillwynia is hard, but both iNat RG obs seem misidentified to me (especially one of them)",Dillwynia elegans,Dillwynia elegans,current,Fabaceae,3.dicot,native,,,,1,,,,,,,,"remove, 01. wrong ID","XX-not on parks list, not in park","XX-no voucher, not in park",(remove),,,,,
 ,Dillwynia floribunda,Dillwynia floribunda,current,Fabaceae,3.dicot,native,22,1,1,1,1,1,1,1,1,,1,retain observation,retain on list,retain voucher,old&recent_vouchers,1888,2005,,2016,2023
 ,Dillwynia glaberrima,Dillwynia glaberrima,current,Fabaceae,3.dicot,native,,1,1,,1,1,,1,,,1," XX-not in iNat, yes in park",retain on list,retain voucher,old_vouchers_only,1938,1975,yes_unsure,,
